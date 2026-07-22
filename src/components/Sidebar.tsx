@@ -13,6 +13,7 @@ export default function Sidebar() {
   const router = useRouter();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
@@ -113,16 +114,10 @@ export default function Sidebar() {
               <button className={styles.logoutBtn} onClick={logout} title="Sign out">Sign Out</button>
             </>
           ) : (
-            <>
-              <button className={styles.userButton} onClick={() => setIsAuthModalOpen(true)}>
-                <UserCircle2 size={24} color="var(--text-secondary)" />
-                <span>Sign In</span>
-              </button>
-              <button className={styles.signUpBtn} onClick={() => setIsAuthModalOpen(true)}>
-                <UserPlus size={16} />
-                <span>Sign Up</span>
-              </button>
-            </>
+            <button className={styles.userButton} onClick={() => setIsAuthModalOpen(true)}>
+              <UserCircle2 size={24} color="var(--text-secondary)" />
+              <span>Sign In</span>
+            </button>
           )}
           <button className={styles.themeToggle} onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -133,8 +128,23 @@ export default function Sidebar() {
       {isAuthModalOpen && (
         <div className="fixed inset-0" style={{position: 'fixed', zIndex: 50, top:0, left:0, right:0, bottom:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.6)'}}>
           <div style={{background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '90%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-             <h2 style={{fontSize:'1.5rem', textAlign: 'center', marginBottom: '0.5rem', color: 'var(--text-primary)'}}>Welcome to SnipLive</h2>
-             <p style={{color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.9rem', marginBottom: '1rem'}}>Sign in or create an account to save your snippets to the cloud</p>
+             <div style={{display: 'flex', gap: '0', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)'}}>
+               <button onClick={() => setAuthMode('signin')} style={{
+                 flex: 1, padding: '0.75rem 0', fontSize: '0.95rem', fontWeight: authMode === 'signin' ? 700 : 500,
+                 color: authMode === 'signin' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                 borderBottom: authMode === 'signin' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                 background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+               }}>Sign In</button>
+               <button onClick={() => setAuthMode('signup')} style={{
+                 flex: 1, padding: '0.75rem 0', fontSize: '0.95rem', fontWeight: authMode === 'signup' ? 700 : 500,
+                 color: authMode === 'signup' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                 borderBottom: authMode === 'signup' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                 background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+               }}>Sign Up</button>
+             </div>
+             <p style={{color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.9rem', marginBottom: '0.5rem'}}>
+               {authMode === 'signin' ? 'Sign in to access your cloud snippets' : 'Create an account to save snippets to the cloud'}
+             </p>
              <button className="btn-secondary" style={{width: '100%', padding: '0.75rem', justifyContent: 'center', gap: '0.75rem', display: 'flex', alignItems: 'center'}} onClick={async () => { await signIn(); setIsAuthModalOpen(false); }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
