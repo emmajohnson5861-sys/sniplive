@@ -10,6 +10,7 @@ interface Stats {
   newUsersThisMonth: number;
   snippetsCreatedToday: number;
   bannedUsers: number;
+  unreadNotifications: number;
 }
 
 export default function AdminDashboard() {
@@ -31,7 +32,7 @@ export default function AdminDashboard() {
     { label: 'Total Snippets', value: stats.totalSnippets },
     { label: 'Reported Snippets', value: stats.reportedSnippets, warn: stats.reportedSnippets > 0 },
     { label: 'New Users (Month)', value: stats.newUsersThisMonth },
-    { label: 'Snippets Today', value: stats.snippetsCreatedToday },
+    { label: 'Unread Notifications', value: stats.unreadNotifications, warn: stats.unreadNotifications > 0 },
     { label: 'Banned Users', value: stats.bannedUsers, warn: stats.bannedUsers > 0 },
   ];
 

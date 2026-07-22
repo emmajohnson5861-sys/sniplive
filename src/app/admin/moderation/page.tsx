@@ -60,7 +60,7 @@ export default function AdminModeration() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>{s.title}</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  by {s.userName || s.userEmail} &middot; {s.reportCount} report{s.reportCount !== 1 ? 's' : ''} &middot; {s.createdAt?.toDate().toLocaleDateString() || '-'}
+                  by {s.ownerName || s.ownerEmail} &middot; {s.reportCount} report{s.reportCount !== 1 ? 's' : ''} &middot; {s.createdAt?.toDate().toLocaleDateString() || '-'}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>

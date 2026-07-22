@@ -5,18 +5,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
-import { LayoutDashboard, Users, Flag, ArrowLeft, Shield } from 'lucide-react';
-
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/moderation', label: 'Moderation', icon: Flag },
-];
+import { getUnreadNotificationCount } from '@/lib/firebase-db';
+import { LayoutDashboard, Users, Flag, ArrowLeft, Shield, Bell } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, initialized } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     initAuthListener();
@@ -27,6 +23,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push('/');
     }
   }, [initialized, user, router]);
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      const fetch = async () => {
+        try {
+          const n = await getUnreadNotificationCount();
+          setUnread(n);
+        } catch {}
+      };
+      fetch();
+      const interval = setInterval(fetch, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const navItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/users', label: 'Users', icon: Users },
+    { href: '/admin/moderation', label: 'Moderation', icon: Flag },
+    { href: '/admin/notifications', label: 'Notifications', icon: Bell, badge: unread },
+  ];
 
   if (loading || !initialized || !user || user.role !== 'ADMIN') {
     return (
@@ -68,6 +85,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <Icon size={16} />
                 {item.label}
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span style={{
+                    marginLeft: 'auto', background: 'var(--error)', color: '#fff',
+                    fontSize: '0.7rem', fontWeight: 700, borderRadius: '10px',
+                    padding: '0.1rem 0.45rem', lineHeight: '1.3',
+                  }}>{item.badge}</span>
+                )}
               </Link>
             );
           })}

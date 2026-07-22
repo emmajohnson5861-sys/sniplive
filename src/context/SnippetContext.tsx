@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '@/store/auth-store';
+import { FirestoreSnippet, getUserSnippets, createSnippet, updateSnippet, deleteSnippet as deleteFirestoreSnippet } from '@/lib/firebase-db';
 
 export interface Snippet {
   id: string;
@@ -10,6 +12,10 @@ export interface Snippet {
   js: string;
   createdAt: number;
   updatedAt: number;
+  isPublic?: boolean;
+  ownerId?: string;
+  collaborators?: string[];
+  pendingRequests?: string[];
 }
 
 interface SnippetContextType {
@@ -26,75 +32,121 @@ interface SnippetContextType {
 const SnippetContext = createContext<SnippetContextType | undefined>(undefined);
 
 export function SnippetProvider({ children }: { children: React.ReactNode }) {
+  const { user, firebaseUser } = useAuthStore();
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>(null);
+  const [loadedFromCloud, setLoadedFromCloud] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('sniplive_snippets');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSnippets(parsed);
-      if (parsed.length > 0 && !activeSnippetId) {
-        setActiveSnippetId(parsed[0].id);
+    if (firebaseUser && !loadedFromCloud) {
+      getUserSnippets(firebaseUser.uid).then(cloudSnippets => {
+        if (cloudSnippets.length > 0) {
+          const mapped = cloudSnippets.map(s => ({
+            id: s.id, title: s.title, html: s.html, css: s.css, js: s.js,
+            createdAt: s.createdAt?.toDate()?.getTime() || Date.now(),
+            updatedAt: s.updatedAt?.toDate()?.getTime() || Date.now(),
+            isPublic: s.isPublic, ownerId: s.ownerId,
+            collaborators: s.collaborators, pendingRequests: s.pendingRequests,
+          }));
+          setSnippets(mapped);
+          if (!activeSnippetId && mapped.length > 0) setActiveSnippetId(mapped[0].id);
+          localStorage.setItem('sniplive_snippets', JSON.stringify(mapped));
+        } else {
+          const local = localStorage.getItem('sniplive_snippets');
+          if (local) {
+            const parsed = JSON.parse(local);
+            setSnippets(parsed);
+            if (parsed.length > 0 && !activeSnippetId) setActiveSnippetId(parsed[0].id);
+          }
+        }
+        setLoadedFromCloud(true);
+      }).catch(() => {
+        const local = localStorage.getItem('sniplive_snippets');
+        if (local) {
+          const parsed = JSON.parse(local);
+          setSnippets(parsed);
+          if (parsed.length > 0 && !activeSnippetId) setActiveSnippetId(parsed[0].id);
+        }
+        setLoadedFromCloud(true);
+      });
+    } else if (!firebaseUser) {
+      const saved = localStorage.getItem('sniplive_snippets');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setSnippets(parsed);
+        if (parsed.length > 0 && !activeSnippetId) setActiveSnippetId(parsed[0].id);
+      } else {
+        const defaultSnippet: Snippet = {
+          id: Math.random().toString(36).substring(2, 9),
+          title: 'My First Snippet',
+          html: '<div class="card">\n  <h2>Hello SnipLive!</h2>\n  <p>Edit this code to see the live preview.</p>\n  <button class="btn">Click Me</button>\n</div>',
+          css: '.card {\n  padding: 2rem;\n  border-radius: 12px;\n  background: white;\n  box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n  font-family: sans-serif;\n  text-align: center;\n}\n\n.btn {\n  margin-top: 1rem;\n  padding: 0.5rem 1rem;\n  background: #6366f1;\n  color: white;\n  border: none;\n  border-radius: 6px;\n  cursor: pointer;\n}',
+          js: 'document.querySelector(".btn").addEventListener("click", () => {\n  alert("Button clicked!");\n});',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+        setSnippets([defaultSnippet]);
+        setActiveSnippetId(defaultSnippet.id);
+        localStorage.setItem('sniplive_snippets', JSON.stringify([defaultSnippet]));
       }
-    } else {
-      const defaultSnippet: Snippet = {
-        id: Math.random().toString(36).substring(2, 9),
-        title: 'My First Snippet',
-        html: '<div class="card">\n  <h2>Hello SnipLive!</h2>\n  <p>Edit this code to see the live preview.</p>\n  <button class="btn">Click Me</button>\n</div>',
-        css: '.card {\n  padding: 2rem;\n  border-radius: 12px;\n  background: white;\n  box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n  font-family: sans-serif;\n  text-align: center;\n}\n\n.btn {\n  margin-top: 1rem;\n  padding: 0.5rem 1rem;\n  background: #6366f1;\n  color: white;\n  border: none;\n  border-radius: 6px;\n  cursor: pointer;\n}',
-        js: 'document.querySelector(".btn").addEventListener("click", () => {\n  alert("Button clicked!");\n});',
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      setSnippets([defaultSnippet]);
-      setActiveSnippetId(defaultSnippet.id);
-      localStorage.setItem('sniplive_snippets', JSON.stringify([defaultSnippet]));
+      setLoadedFromCloud(true);
     }
-  }, []);
+  }, [firebaseUser]);
 
-  const saveSnippet = (snippet: Snippet) => {
+  const saveSnippet = useCallback((snippet: Snippet) => {
     const updated = snippets.map(s => s.id === snippet.id ? { ...snippet, updatedAt: Date.now() } : s);
     setSnippets(updated);
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
-  };
+    if (firebaseUser) {
+      updateSnippet(snippet.id, {
+        title: snippet.title, html: snippet.html, css: snippet.css, js: snippet.js,
+      } as any).catch(console.error);
+    }
+  }, [snippets, firebaseUser]);
   
-  const updateSnippetTitle = (id: string, newTitle: string) => {
+  const updateSnippetTitle = useCallback((id: string, newTitle: string) => {
     const updated = snippets.map(s => s.id === id ? { ...s, title: newTitle, updatedAt: Date.now() } : s);
     setSnippets(updated);
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
-  };
-
-  const createNewSnippet = () => {
-    console.log("createNewSnippet called! Current snippets:", snippets.length);
-    try {
-      const newSnippet: Snippet = {
-        id: Math.random().toString(36).substring(2, 9),
-        title: 'Untitled Snippet',
-        html: '<!-- Write your HTML here -->\n',
-        css: '/* Write your CSS here */\n',
-        js: '// Write your JS here\n',
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      const updated = [newSnippet, ...snippets];
-      setSnippets(updated);
-      setActiveSnippetId(newSnippet.id);
-      localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
-      console.log("Snippet created successfully, new active ID:", newSnippet.id);
-    } catch (err) {
-      console.error("Error creating snippet:", err);
+    if (firebaseUser) {
+      updateSnippet(id, { title: newTitle } as any).catch(console.error);
     }
-  };
+  }, [snippets, firebaseUser]);
 
-  const deleteSnippet = (id: string) => {
+  const createNewSnippet = useCallback(() => {
+    const newSnippet: Snippet = {
+      id: Math.random().toString(36).substring(2, 9),
+      title: 'Untitled Snippet',
+      html: '<!-- Write your HTML here -->\n',
+      css: '/* Write your CSS here */\n',
+      js: '// Write your JS here\n',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    const updated = [newSnippet, ...snippets];
+    setSnippets(updated);
+    setActiveSnippetId(newSnippet.id);
+    localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
+    if (firebaseUser) {
+      createSnippet({
+        id: newSnippet.id, title: newSnippet.title,
+        html: newSnippet.html, css: newSnippet.css, js: newSnippet.js,
+        ownerId: firebaseUser.uid, ownerName: user?.name || null, ownerEmail: user?.email || '',
+      }).catch(console.error);
+    }
+  }, [snippets, firebaseUser, user]);
+
+  const deleteSnippet = useCallback((id: string) => {
     const updated = snippets.filter(s => s.id !== id);
     setSnippets(updated);
     if (activeSnippetId === id) {
       setActiveSnippetId(updated.length > 0 ? updated[0].id : null);
     }
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
-  };
+    if (firebaseUser) {
+      deleteFirestoreSnippet(id).catch(console.error);
+    }
+  }, [snippets, activeSnippetId, firebaseUser]);
 
   const activeSnippet = snippets.find(s => s.id === activeSnippetId) || null;
 
