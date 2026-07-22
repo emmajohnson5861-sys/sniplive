@@ -54,7 +54,14 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
         } else {
           const local = localStorage.getItem('sniplive_snippets');
           if (local) {
-            const parsed = JSON.parse(local);
+            let parsed = JSON.parse(local);
+            parsed = parsed.map((s: Snippet) => ({
+              ...s,
+              ownerId: s.ownerId || firebaseUser.uid,
+              isPublic: s.isPublic ?? false,
+              collaborators: s.collaborators && s.collaborators.length > 0 ? s.collaborators : [firebaseUser.uid],
+              pendingRequests: s.pendingRequests || [],
+            }));
             setSnippets(parsed);
             if (parsed.length > 0 && !activeSnippetId) setActiveSnippetId(parsed[0].id);
           }
@@ -63,7 +70,14 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => {
         const local = localStorage.getItem('sniplive_snippets');
         if (local) {
-          const parsed = JSON.parse(local);
+          let parsed = JSON.parse(local);
+          parsed = parsed.map((s: Snippet) => ({
+            ...s,
+            ownerId: s.ownerId || firebaseUser.uid,
+            isPublic: s.isPublic ?? false,
+            collaborators: s.collaborators && s.collaborators.length > 0 ? s.collaborators : [firebaseUser.uid],
+            pendingRequests: s.pendingRequests || [],
+          }));
           setSnippets(parsed);
           if (parsed.length > 0 && !activeSnippetId) setActiveSnippetId(parsed[0].id);
         }
@@ -94,24 +108,46 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
   }, [firebaseUser]);
 
   const saveSnippet = useCallback((snippet: Snippet) => {
-    const updated = snippets.map(s => s.id === snippet.id ? { ...snippet, updatedAt: Date.now() } : s);
+    const enriched = { ...snippet };
+    if (firebaseUser && !enriched.ownerId) {
+      enriched.ownerId = firebaseUser.uid;
+      enriched.isPublic = enriched.isPublic ?? false;
+      enriched.collaborators = enriched.collaborators ?? [firebaseUser.uid];
+      enriched.pendingRequests = enriched.pendingRequests ?? [];
+    }
+    const updated = snippets.map(s => s.id === enriched.id ? { ...enriched, updatedAt: Date.now() } : s);
     setSnippets(updated);
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
     if (firebaseUser) {
-      updateSnippet(snippet.id, {
+      const fbData: Record<string, unknown> = {
         title: snippet.title, html: snippet.html, css: snippet.css, js: snippet.js,
-      } as any).catch(console.error);
+      };
+      if (snippet.ownerId || enriched.ownerId) {
+        fbData.ownerId = snippet.ownerId || enriched.ownerId;
+        fbData.ownerName = user?.name || null;
+        fbData.ownerEmail = user?.email || '';
+        fbData.collaborators = [fbData.ownerId];
+      }
+      updateSnippet(snippet.id, fbData as any).catch(console.error);
     }
-  }, [snippets, firebaseUser]);
+  }, [snippets, firebaseUser, user]);
   
   const updateSnippetTitle = useCallback((id: string, newTitle: string) => {
     const updated = snippets.map(s => s.id === id ? { ...s, title: newTitle, updatedAt: Date.now() } : s);
     setSnippets(updated);
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
     if (firebaseUser) {
-      updateSnippet(id, { title: newTitle } as any).catch(console.error);
+      const fbData: Record<string, unknown> = { title: newTitle };
+      const found = updated.find(s => s.id === id);
+      if (found && (found.ownerId || firebaseUser.uid)) {
+        fbData.ownerId = found.ownerId || firebaseUser.uid;
+        fbData.ownerName = user?.name || null;
+        fbData.ownerEmail = user?.email || '';
+        fbData.collaborators = [fbData.ownerId];
+      }
+      updateSnippet(id, fbData as any).catch(console.error);
     }
-  }, [snippets, firebaseUser]);
+  }, [snippets, firebaseUser, user]);
 
   const createNewSnippet = useCallback(() => {
     const ownerId = firebaseUser?.uid || '';

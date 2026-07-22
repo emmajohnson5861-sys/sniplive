@@ -104,7 +104,7 @@ export async function createSnippet(data: {
 }
 
 export async function updateSnippet(id: string, data: Partial<FirestoreSnippet>) {
-  await updateDoc(doc(db, 'snippets', id), { ...data, updatedAt: serverTimestamp() } as any);
+  await setDoc(doc(db, 'snippets', id), { ...data, updatedAt: serverTimestamp() } as any, { merge: true });
 }
 
 export async function deleteSnippet(id: string) {
@@ -147,32 +147,36 @@ export async function getPublicSnippet(id: string): Promise<FirestoreSnippet | n
 // ─── Sharing / Access Requests ──────────────────────
 
 export async function toggleSnippetVisibility(id: string, isPublic: boolean) {
-  await updateDoc(doc(db, 'snippets', id), { isPublic } as any);
+  await setDoc(doc(db, 'snippets', id), { isPublic, updatedAt: serverTimestamp() } as any, { merge: true });
 }
 
 export async function requestAccess(snippetId: string, userId: string) {
-  await updateDoc(doc(db, 'snippets', snippetId), {
+  await setDoc(doc(db, 'snippets', snippetId), {
     pendingRequests: arrayUnion(userId),
-  } as any);
+    updatedAt: serverTimestamp(),
+  } as any, { merge: true });
 }
 
 export async function approveAccess(snippetId: string, userId: string) {
-  await updateDoc(doc(db, 'snippets', snippetId), {
+  await setDoc(doc(db, 'snippets', snippetId), {
     collaborators: arrayUnion(userId),
     pendingRequests: arrayRemove(userId),
-  } as any);
+    updatedAt: serverTimestamp(),
+  } as any, { merge: true });
 }
 
 export async function denyAccess(snippetId: string, userId: string) {
-  await updateDoc(doc(db, 'snippets', snippetId), {
+  await setDoc(doc(db, 'snippets', snippetId), {
     pendingRequests: arrayRemove(userId),
-  } as any);
+    updatedAt: serverTimestamp(),
+  } as any, { merge: true });
 }
 
 export async function removeCollaborator(snippetId: string, userId: string) {
-  await updateDoc(doc(db, 'snippets', snippetId), {
+  await setDoc(doc(db, 'snippets', snippetId), {
     collaborators: arrayRemove(userId),
-  } as any);
+    updatedAt: serverTimestamp(),
+  } as any, { merge: true });
 }
 
 // ─── Notifications ──────────────────────────────────
