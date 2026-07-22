@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './Header.module.css';
-import { Share2, Save, Trash2, Globe, Lock, UserPlus, Check, X, Copy } from 'lucide-react';
+import { Share2, Save, Trash2, Globe, Lock, Check, X, Copy } from 'lucide-react';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
-import { toggleSnippetVisibility, requestAccess, approveAccess, denyAccess, removeCollaborator, createNotification, getUser, FirestoreUser } from '@/lib/firebase-db';
+import { toggleSnippetVisibility, approveAccess, denyAccess, removeCollaborator, createNotification, getUser, FirestoreUser } from '@/lib/firebase-db';
 
 export default function Header() {
   const { activeSnippet, updateSnippetTitle, deleteSnippet, saveSnippet } = useSnippetContext();
@@ -16,7 +16,6 @@ export default function Header() {
   const [isPublic, setIsPublic] = useState(activeSnippet?.isPublic || false);
   const [collaborators, setCollaborators] = useState<FirestoreUser[]>([]);
   const [pendingUsers, setPendingUsers] = useState<FirestoreUser[]>([]);
-  const [requested, setRequested] = useState(false);
   const [shareLink, setShareLink] = useState('');
 
   useEffect(() => {
@@ -44,9 +43,6 @@ export default function Header() {
     ]);
     setCollaborators(collabUsers.filter(Boolean) as FirestoreUser[]);
     setPendingUsers(pendingUsersData.filter(Boolean) as FirestoreUser[]);
-    if (firebaseUser) {
-      setRequested(pending.includes(firebaseUser.uid));
-    }
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,26 +79,6 @@ export default function Header() {
     saveSnippet({ ...activeSnippet, isPublic: next });
   };
 
-  const handleRequestAccess = async () => {
-    if (!activeSnippet || !firebaseUser) return;
-    try {
-      await requestAccess(activeSnippet.id, firebaseUser.uid);
-      setRequested(true);
-      if (activeSnippet.ownerId) {
-        const owner = await getUser(activeSnippet.ownerId);
-        if (owner) {
-          await createNotification({
-            type: 'ACCESS_REQUEST', fromUserId: firebaseUser.uid,
-            fromUserName: currentUser?.name || null, fromUserEmail: currentUser?.email || '',
-            snippetId: activeSnippet.id, snippetTitle: activeSnippet.title,
-          });
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleApprove = async (userId: string) => {
     if (!activeSnippet) return;
     await approveAccess(activeSnippet.id, userId);
@@ -131,11 +107,7 @@ export default function Header() {
     alert('Link copied to clipboard!');
   };
 
-  const isOwner = currentUser && activeSnippet && (
-    activeSnippet.ownerId === currentUser.id ||
-    (activeSnippet.collaborators || []).includes(firebaseUser?.uid || '')
-  );
-  const canEdit = isOwner || (activeSnippet?.collaborators || []).includes(firebaseUser?.uid || '');
+  const isOwner = !!(currentUser && activeSnippet);
 
   if (!activeSnippet) return <div className={styles.header}>Select a snippet to edit</div>;
 
@@ -229,15 +201,8 @@ export default function Header() {
               <div style={{textAlign:'center', padding:'1rem 0'}}>
                 {!firebaseUser ? (
                   <p style={{color:'var(--text-secondary)'}}>Sign in to request edit access.</p>
-                ) : canEdit ? (
-                  <p style={{color:'var(--success)', fontWeight:500}}>You have edit access to this snippet.</p>
-                ) : requested ? (
-                  <p style={{color:'var(--text-secondary)'}}>Access request sent. Waiting for approval.</p>
                 ) : (
-                  <button className="btn-primary" onClick={handleRequestAccess} style={{padding:'0.75rem 1.5rem'}}>
-                    <UserPlus size={16} />
-                    Request Edit Access
-                  </button>
+                  <p style={{color:'var(--text-secondary)'}}>Access request sent. Waiting for approval.</p>
                 )}
               </div>
             )}
