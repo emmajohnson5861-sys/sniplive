@@ -1,0 +1,69 @@
+.editorContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--bg-primary);
+}
+
+.tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  height: 40px;
+}
+
+.tab {
+  padding: 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-right: 1px solid var(--border-color);
+  position: relative;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.tab.active {
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-primary);
+}
+
+.codeArea {
+  flex: 1;
+  overflow: auto;
+}
+
+.cmWrapper {
+  height: 100%;
+  font-size: 14px;
+}
+
+.cmWrapper :global(.cm-theme) {
+  height: 100%;
+}
+
+.cmWrapper :global(.cm-editor) {
+  height: 100%;
+  background: var(--bg-primary) !important;
+}
+
+.cmWrapper :global(.cm-gutters) {
+  background: var(--bg-secondary) !important;
+  border-right: 1px solid var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}

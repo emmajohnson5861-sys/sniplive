@@ -1,0 +1,53 @@
+.header {
+  height: 60px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+  width: 100%;
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.titleInput {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.2s;
+}
+
+.titleInput:hover {
+  border-color: var(--border-color);
+  background: var(--bg-tertiary);
+}
+
+.titleInput:focus {
+  border-color: var(--accent-primary);
+  background: var(--bg-tertiary);
+}
+
+.unsavedIndicator {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}

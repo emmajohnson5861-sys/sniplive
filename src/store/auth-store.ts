@@ -1,0 +1,49 @@
+import { create } from 'zustand';
+import { User } from '@firebase/auth';
+import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/firebase-auth';
+import { getUser, FirestoreUser } from '@/lib/firebase-db';
+
+interface AuthState {
+  firebaseUser: User | null;
+  user: FirestoreUser | null;
+  loading: boolean;
+  initialized: boolean;
+  signIn: () => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  firebaseUser: null,
+  user: null,
+  loading: true,
+  initialized: false,
+
+  signIn: async () => {
+    const fbUser = await signInWithGoogle();
+    if (fbUser) {
+      const userData = await getUser(fbUser.uid);
+      set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+    }
+  },
+
+  logout: async () => {
+    await signOutUser();
+    set({ firebaseUser: null, user: null, loading: false });
+  },
+}));
+
+let initStarted = false;
+export function initAuthListener() {
+  if (initStarted) return;
+  initStarted = true;
+
+  const store = useAuthStore;
+  onAuthChange(async (fbUser) => {
+    if (fbUser) {
+      const userData = await getUser(fbUser.uid);
+      store.setState({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+    } else {
+      store.setState({ firebaseUser: null, user: null, loading: false, initialized: true });
+    }
+  });
+}
