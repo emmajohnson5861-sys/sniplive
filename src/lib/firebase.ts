@@ -3,12 +3,12 @@ import { getAuth } from '@firebase/auth';
 import { getFirestore } from '@firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBL84W31xOP92ILeNSbTNB3NR5fG4EW1Vc",
-  authDomain: "sniplive-12fea.firebaseapp.com",
-  projectId: "sniplive-12fea",
-  storageBucket: "sniplive-12fea.firebasestorage.app",
-  messagingSenderId: "70517656791",
-  appId: "1:70517656791:web:762d35b4005785e922f492"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
