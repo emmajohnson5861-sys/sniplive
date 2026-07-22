@@ -114,6 +114,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
   }, [snippets, firebaseUser]);
 
   const createNewSnippet = useCallback(() => {
+    const ownerId = firebaseUser?.uid || '';
     const newSnippet: Snippet = {
       id: Math.random().toString(36).substring(2, 9),
       title: 'Untitled Snippet',
@@ -121,7 +122,11 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       css: '/* Write your CSS here */\n',
       js: '// Write your JS here\n',
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      ownerId,
+      isPublic: false,
+      collaborators: ownerId ? [ownerId] : [],
+      pendingRequests: [],
     };
     const updated = [newSnippet, ...snippets];
     setSnippets(updated);

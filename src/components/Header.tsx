@@ -85,15 +85,21 @@ export default function Header() {
 
   const handleRequestAccess = async () => {
     if (!activeSnippet || !firebaseUser) return;
-    await requestAccess(activeSnippet.id, firebaseUser.uid);
-    setRequested(true);
-    const owner = await getUser(activeSnippet.ownerId || '');
-    if (owner) {
-      await createNotification({
-        type: 'ACCESS_REQUEST', fromUserId: firebaseUser.uid,
-        fromUserName: currentUser?.name || null, fromUserEmail: currentUser?.email || '',
-        snippetId: activeSnippet.id, snippetTitle: activeSnippet.title,
-      });
+    try {
+      await requestAccess(activeSnippet.id, firebaseUser.uid);
+      setRequested(true);
+      if (activeSnippet.ownerId) {
+        const owner = await getUser(activeSnippet.ownerId);
+        if (owner) {
+          await createNotification({
+            type: 'ACCESS_REQUEST', fromUserId: firebaseUser.uid,
+            fromUserName: currentUser?.name || null, fromUserEmail: currentUser?.email || '',
+            snippetId: activeSnippet.id, snippetTitle: activeSnippet.title,
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
