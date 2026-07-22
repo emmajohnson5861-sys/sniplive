@@ -19,10 +19,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   signIn: async () => {
-    const fbUser = await signInWithGoogle();
-    if (fbUser) {
-      const userData = await getUser(fbUser.uid);
-      set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+    try {
+      const fbUser = await signInWithGoogle();
+      if (fbUser) {
+        const userData = await getUser(fbUser.uid);
+        set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+      }
+    } catch (err) {
+      set({ loading: false });
     }
   },
 
@@ -40,8 +44,12 @@ export function initAuthListener() {
   const store = useAuthStore;
   onAuthChange(async (fbUser) => {
     if (fbUser) {
-      const userData = await getUser(fbUser.uid);
-      store.setState({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+      try {
+        const userData = await getUser(fbUser.uid);
+        store.setState({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+      } catch (err) {
+        store.setState({ firebaseUser: fbUser, user: null, loading: false, initialized: true });
+      }
     } else {
       store.setState({ firebaseUser: null, user: null, loading: false, initialized: true });
     }

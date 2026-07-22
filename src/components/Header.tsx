@@ -131,7 +131,10 @@ export default function Header() {
     alert('Link copied to clipboard!');
   };
 
-  const isOwner = currentUser && activeSnippet?.ownerId === currentUser.id;
+  const isOwner = currentUser && activeSnippet && (
+    activeSnippet.ownerId === currentUser.id ||
+    (activeSnippet.collaborators || []).includes(firebaseUser?.uid || '')
+  );
   const canEdit = isOwner || (activeSnippet?.collaborators || []).includes(firebaseUser?.uid || '');
 
   if (!activeSnippet) return <div className={styles.header}>Select a snippet to edit</div>;
