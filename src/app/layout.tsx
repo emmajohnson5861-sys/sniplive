@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Karla, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/components/Toast';
+import BannedOverlay from '@/components/BannedOverlay';
 
 const karla = Karla({ subsets: ['latin'] });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${karla.className} ${jetbrainsMono.variable}`} suppressHydrationWarning>
         <ToastProvider>
           {children}
+          <BannedOverlay />
         </ToastProvider>
       </body>
     </html>
