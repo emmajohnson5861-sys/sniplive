@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getNotifications, markNotificationRead, markAllNotificationsRead, Notification } from '@/lib/firebase-db';
+import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead, Notification, approveAccess, denyAccess } from '@/lib/firebase-db';
 import { Bell, CheckCheck, UserPlus, Check, X, ExternalLink } from 'lucide-react';
 
 export default function AdminNotifications() {
@@ -10,23 +10,38 @@ export default function AdminNotifications() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const fetchNotifs = async () => {
+  useEffect(() => {
     setLoading(true);
-    try {
-      const data = await getNotifications();
+    const unsubscribe = subscribeToNotifications(50, (data) => {
       setNotifications(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
       setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchNotifs(); }, []);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleMarkRead = async (id: string) => {
     await markNotificationRead(id);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const handleApprove = async (e: React.MouseEvent, n: Notification) => {
+    e.stopPropagation();
+    try {
+      await approveAccess(n.snippetId, n.fromUserId);
+      await handleMarkRead(n.id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeny = async (e: React.MouseEvent, n: Notification) => {
+    e.stopPropagation();
+    try {
+      await denyAccess(n.snippetId, n.fromUserId);
+      await handleMarkRead(n.id);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleMarkAllRead = async () => {
@@ -88,6 +103,12 @@ export default function AdminNotifications() {
                 <div style={{fontSize:'0.75rem', color:'var(--text-secondary)', marginTop:'0.15rem'}}>
                   {n.createdAt?.toDate().toLocaleString() || ''}
                 </div>
+                {n.type === 'ACCESS_REQUEST' && !n.read && (
+                  <div style={{display:'flex', gap:'0.5rem', marginTop:'0.5rem'}}>
+                    <button className="btn-primary" style={{padding:'0.25rem 0.75rem', fontSize:'0.75rem'}} onClick={(e) => handleApprove(e, n)}>Approve</button>
+                    <button className="btn-secondary" style={{padding:'0.25rem 0.75rem', fontSize:'0.75rem', background:'var(--bg-primary)'}} onClick={(e) => handleDeny(e, n)}>Deny</button>
+                  </div>
+                )}
               </div>
               {!n.read && <div style={{width:8, height:8, borderRadius:'50%', background:'var(--accent-primary)', flexShrink:0}} />}
             </div>

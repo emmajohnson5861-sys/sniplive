@@ -2,7 +2,7 @@ import { db } from './firebase';
 import {
   collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   query, where, orderBy, limit, serverTimestamp, Timestamp,
-  arrayUnion, arrayRemove,
+  arrayUnion, arrayRemove, onSnapshot, increment
 } from '@firebase/firestore';
 
 export interface FirestoreUser {
@@ -24,7 +24,11 @@ export interface FirestoreSnippet {
   html: string;
   css: string;
   js: string;
-  isPublic: boolean;
+  visibility: 'private' | 'unlisted' | 'public';
+  allowForking: boolean;
+  forkedFromId: string | null;
+  viewCount: number;
+  likeCount: number;
   ownerId: string;
   ownerName: string | null;
   ownerEmail: string;
@@ -92,10 +96,13 @@ export async function deleteUser(uid: string) {
 export async function createSnippet(data: {
   id: string; title: string; html: string; css: string; js: string;
   ownerId: string; ownerName: string | null; ownerEmail: string;
+  forkedFromId?: string | null;
 }) {
   await setDoc(doc(db, 'snippets', data.id), {
     title: data.title, html: data.html, css: data.css, js: data.js,
-    isPublic: false, ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
+    visibility: 'private', allowForking: true, forkedFromId: data.forkedFromId || null,
+    viewCount: 0, likeCount: 0,
+    ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
     collaborators: [data.ownerId], pendingRequests: [],
     isReported: false, reportCount: 0,
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
@@ -125,17 +132,26 @@ export async function deleteSnippet(id: string) {
 export async function getSnippet(id: string): Promise<FirestoreSnippet | null> {
   const snap = await getDoc(doc(db, 'snippets', id));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as FirestoreSnippet;
+  const data = snap.data();
+  if (data.visibility === undefined) data.visibility = data.isPublic ? 'public' : 'private';
+  if (data.allowForking === undefined) data.allowForking = true;
+  if (data.viewCount === undefined) data.viewCount = 0;
+  if (data.likeCount === undefined) data.likeCount = 0;
+  return { id: snap.id, ...data } as FirestoreSnippet;
 }
 
 export async function getUserSnippets(userId: string): Promise<FirestoreSnippet[]> {
   const q = query(
     collection(db, 'snippets'),
-    where('collaborators', 'array-contains', userId),
-    orderBy('updatedAt', 'desc')
+    where('ownerId', '==', userId)
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreSnippet));
+  const snippets = snap.docs.map(d => {
+    const data = d.data();
+    if (data.visibility === undefined) data.visibility = data.isPublic ? 'public' : 'private';
+    return { id: d.id, ...data } as FirestoreSnippet;
+  });
+  return snippets.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
 }
 
 export async function getPublicSnippet(id: string): Promise<FirestoreSnippet | null> {
@@ -144,15 +160,76 @@ export async function getPublicSnippet(id: string): Promise<FirestoreSnippet | n
   return { id: snap.id, ...snap.data() } as FirestoreSnippet;
 }
 
+export function subscribeToUserSnippets(userId: string, callback: (snippets: FirestoreSnippet[]) => void) {
+  const q = query(
+    collection(db, 'snippets'),
+    where('ownerId', '==', userId)
+  );
+  return onSnapshot(q, (snap) => {
+    const snippets = snap.docs.map(d => {
+      const data = d.data();
+      if (data.visibility === undefined) data.visibility = data.isPublic ? 'public' : 'private';
+      return { id: d.id, ...data } as FirestoreSnippet;
+    });
+    snippets.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+    callback(snippets);
+  });
+}
+
+export function subscribeToSnippet(id: string, userId: string | null, callback: (snippet: FirestoreSnippet | null) => void) {
+  return onSnapshot(doc(db, 'snippets', id), (snap) => {
+    if (!snap.exists()) {
+      callback(null);
+      return;
+    }
+    const data = snap.data();
+    if (data.visibility === undefined) {
+      data.visibility = data.isPublic ? 'public' : 'private';
+    }
+    const snippet = { ...data, id: snap.id } as FirestoreSnippet;
+    
+    if (snippet.visibility === 'public' || snippet.visibility === 'unlisted' || (userId && snippet.collaborators.includes(userId))) {
+      callback(snippet);
+    } else {
+      callback(null);
+    }
+  });
+}
+
 // ─── Sharing / Access Requests ──────────────────────
 
-export async function toggleSnippetVisibility(id: string, isPublic: boolean) {
-  await setDoc(doc(db, 'snippets', id), { isPublic, updatedAt: serverTimestamp() } as any, { merge: true });
+export async function updateSnippetVisibility(id: string, visibility: 'private' | 'unlisted' | 'public', allowForking: boolean) {
+  await updateDoc(doc(db, 'snippets', id), { visibility, allowForking, updatedAt: serverTimestamp() });
+}
+
+export async function incrementSnippetView(id: string) {
+  await updateDoc(doc(db, 'snippets', id), { viewCount: increment(1) });
 }
 
 export async function requestAccess(snippetId: string, userId: string) {
   await setDoc(doc(db, 'snippets', snippetId), {
     pendingRequests: arrayUnion(userId),
+    updatedAt: serverTimestamp(),
+  } as any, { merge: true });
+
+  const user = await getUser(userId);
+  const snippet = await getSnippet(snippetId);
+  
+  if (user && snippet) {
+    await createNotification({
+      type: 'ACCESS_REQUEST',
+      fromUserId: userId,
+      fromUserName: user.name,
+      fromUserEmail: user.email,
+      snippetId: snippetId,
+      snippetTitle: snippet.title,
+    });
+  }
+}
+
+export async function cancelAccessRequest(snippetId: string, userId: string) {
+  await setDoc(doc(db, 'snippets', snippetId), {
+    pendingRequests: arrayRemove(userId),
     updatedAt: serverTimestamp(),
   } as any, { merge: true });
 }
@@ -179,6 +256,115 @@ export async function removeCollaborator(snippetId: string, userId: string) {
   } as any, { merge: true });
 }
 
+// ─── Groups ─────────────────────────────────────────
+
+export interface FirestoreGroup {
+  id: string;
+  title: string;
+  description: string;
+  isPublic: boolean;
+  ownerId: string;
+  ownerName: string | null;
+  snippetIds: string[];
+  collaborators: string[];
+  pendingRequests: string[];
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+export async function createGroup(data: {
+  id: string; title: string; description: string; ownerId: string; ownerName: string | null; snippetIds?: string[];
+}) {
+  await setDoc(doc(db, 'groups', data.id), {
+    title: data.title, description: data.description,
+    isPublic: false, ownerId: data.ownerId, ownerName: data.ownerName,
+    snippetIds: data.snippetIds || [],
+    collaborators: [data.ownerId], pendingRequests: [],
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateGroup(id: string, data: Partial<FirestoreGroup>) {
+  await setDoc(doc(db, 'groups', id), { ...data, updatedAt: serverTimestamp() } as any, { merge: true });
+}
+
+export async function deleteGroup(id: string) {
+  await deleteDoc(doc(db, 'groups', id));
+}
+
+export async function getGroup(id: string): Promise<FirestoreGroup | null> {
+  const snap = await getDoc(doc(db, 'groups', id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as FirestoreGroup;
+}
+
+export async function getPublicGroup(id: string): Promise<FirestoreGroup | null> {
+  const snap = await getDoc(doc(db, 'groups', id));
+  if (!snap.exists() || !snap.data().isPublic) return null;
+  return { id: snap.id, ...snap.data() } as FirestoreGroup;
+}
+
+export async function getUserGroups(userId: string): Promise<FirestoreGroup[]> {
+  const q = query(collection(db, 'groups'), where('collaborators', 'array-contains', userId));
+  const snap = await getDocs(q);
+  const groups = snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreGroup));
+  return groups.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+}
+
+export async function getPublicUserGroups(userId: string): Promise<FirestoreGroup[]> {
+  const q = query(collection(db, 'groups'), where('ownerId', '==', userId), where('isPublic', '==', true));
+  const snap = await getDocs(q);
+  const groups = snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreGroup));
+  return groups.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+}
+
+export async function getPublicUserSnippets(userId: string): Promise<FirestoreSnippet[]> {
+  const q = query(collection(db, 'snippets'), where('ownerId', '==', userId), where('visibility', '==', 'public'));
+  const snap = await getDocs(q);
+  const snippets = snap.docs.map(d => {
+    const data = d.data();
+    if (data.visibility === undefined) data.visibility = data.isPublic ? 'public' : 'private';
+    return { id: d.id, ...data } as FirestoreSnippet;
+  });
+  return snippets.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+}
+
+export function subscribeToUserGroups(userId: string, callback: (groups: FirestoreGroup[]) => void) {
+  const q = query(collection(db, 'groups'), where('collaborators', 'array-contains', userId));
+  return onSnapshot(q, (snap) => {
+    const groups = snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreGroup));
+    groups.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+    callback(groups);
+  });
+}
+
+export function subscribeToGroup(id: string, userId: string | null, callback: (group: FirestoreGroup | null) => void) {
+  return onSnapshot(doc(db, 'groups', id), (snap) => {
+    if (!snap.exists()) {
+      callback(null);
+      return;
+    }
+    const data = snap.data() as FirestoreGroup;
+    if (data.isPublic || (userId && data.collaborators.includes(userId))) {
+      callback({ ...data, id: snap.id });
+    } else {
+      callback(null);
+    }
+  });
+}
+
+export async function requestGroupAccess(groupId: string, userId: string) {
+  await setDoc(doc(db, 'groups', groupId), { pendingRequests: arrayUnion(userId), updatedAt: serverTimestamp() } as any, { merge: true });
+}
+
+export async function approveGroupAccess(groupId: string, userId: string) {
+  await setDoc(doc(db, 'groups', groupId), { collaborators: arrayUnion(userId), pendingRequests: arrayRemove(userId), updatedAt: serverTimestamp() } as any, { merge: true });
+}
+
+export async function cancelGroupAccessRequest(groupId: string, userId: string) {
+  await setDoc(doc(db, 'groups', groupId), { pendingRequests: arrayRemove(userId), updatedAt: serverTimestamp() } as any, { merge: true });
+}
+
 // ─── Notifications ──────────────────────────────────
 
 export async function createNotification(data: Omit<Notification, 'id' | 'createdAt' | 'read'>) {
@@ -193,6 +379,14 @@ export async function getNotifications(limitSize = 50): Promise<Notification[]> 
   const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(limitSize));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Notification));
+}
+
+export function subscribeToNotifications(limitSize = 50, callback: (notifications: Notification[]) => void) {
+  const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(limitSize));
+  return onSnapshot(q, (snap) => {
+    const notifs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Notification));
+    callback(notifs);
+  });
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {
@@ -264,4 +458,57 @@ export async function getStats(): Promise<{
     snippetsCreatedToday, bannedUsers: bannedSnap.size,
     unreadNotifications: notifSnap.size,
   };
+}
+
+// ─── Invites ────────────────────────────────────────
+
+export interface FirestoreInvite {
+  id: string;
+  targetEmail: string;
+  resourceType: 'snippet' | 'group';
+  resourceId: string;
+  inviterId: string;
+  status: 'pending' | 'accepted';
+  createdAt: Timestamp | null;
+}
+
+export async function createInvite(targetEmail: string, resourceType: 'snippet' | 'group', resourceId: string, inviterId: string): Promise<string> {
+  const id = Math.random().toString(36).substring(2, 15);
+  await setDoc(doc(db, 'invites', id), {
+    targetEmail,
+    resourceType,
+    resourceId,
+    inviterId,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+  return id;
+}
+
+export async function getInvite(id: string): Promise<FirestoreInvite | null> {
+  const snap = await getDoc(doc(db, 'invites', id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as FirestoreInvite;
+}
+
+export async function redeemInvite(inviteId: string, currentUserEmail: string, currentUserId: string): Promise<{ success: boolean, message: string }> {
+  const invite = await getInvite(inviteId);
+  if (!invite) return { success: false, message: 'Invite not found.' };
+  if (invite.status === 'accepted') return { success: false, message: 'Invite already redeemed.' };
+  if (invite.targetEmail.toLowerCase() !== currentUserEmail.toLowerCase()) {
+    return { success: false, message: `This invite was sent to ${invite.targetEmail}, not ${currentUserEmail}.` };
+  }
+
+  await updateDoc(doc(db, 'invites', inviteId), { status: 'accepted' });
+  
+  if (invite.resourceType === 'snippet') {
+    await updateDoc(doc(db, 'snippets', invite.resourceId), { collaborators: arrayUnion(currentUserId) });
+  } else if (invite.resourceType === 'group') {
+    await updateDoc(doc(db, 'groups', invite.resourceId), { collaborators: arrayUnion(currentUserId) });
+  }
+  return { success: true, message: 'Invite successfully redeemed!' };
+}
+
+export async function toggleGroupVisibility(groupId: string, isPublic: boolean) {
+  await setDoc(doc(db, 'groups', groupId), { isPublic, updatedAt: serverTimestamp() } as any, { merge: true });
 }

@@ -17,19 +17,37 @@ export default function SplitPane() {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [jsCode, setJsCode] = useState('');
+  const lastSavedCloud = React.useRef({ id: '', html: '', css: '', js: '' });
 
-  // Sync local state when active snippet changes
   useEffect(() => {
     if (activeSnippet) {
-      setHtmlCode(activeSnippet.html);
-      setCssCode(activeSnippet.css);
-      setJsCode(activeSnippet.js);
+      if (lastSavedCloud.current.id !== activeSnippet.id) {
+        setHtmlCode(activeSnippet.html);
+        setCssCode(activeSnippet.css);
+        setJsCode(activeSnippet.js);
+        lastSavedCloud.current = { id: activeSnippet.id, html: activeSnippet.html, css: activeSnippet.css, js: activeSnippet.js };
+      } else {
+        const oldCloud = { ...lastSavedCloud.current };
+        if (activeSnippet.html !== oldCloud.html) {
+          setHtmlCode(prev => prev === oldCloud.html ? activeSnippet.html : prev);
+          lastSavedCloud.current.html = activeSnippet.html;
+        }
+        if (activeSnippet.css !== oldCloud.css) {
+          setCssCode(prev => prev === oldCloud.css ? activeSnippet.css : prev);
+          lastSavedCloud.current.css = activeSnippet.css;
+        }
+        if (activeSnippet.js !== oldCloud.js) {
+          setJsCode(prev => prev === oldCloud.js ? activeSnippet.js : prev);
+          lastSavedCloud.current.js = activeSnippet.js;
+        }
+      }
     } else {
       setHtmlCode('');
       setCssCode('');
       setJsCode('');
+      lastSavedCloud.current = { id: '', html: '', css: '', js: '' };
     }
-  }, [activeSnippet?.id]); // Only sync when the ID changes (not on every edit)
+  }, [activeSnippet]); // Sync when activeSnippet data changes from cloud
 
   // Autosave functionality
   useEffect(() => {
@@ -44,6 +62,7 @@ export default function SplitPane() {
           css: cssCode,
           js: jsCode
         });
+        lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode };
       }, 2000); // 2 second autosave debounce
       
       return () => clearTimeout(timeout);

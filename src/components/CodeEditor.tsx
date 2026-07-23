@@ -16,6 +16,7 @@ interface CodeEditorProps {
   setCss: (val: string) => void;
   js: string;
   setJs: (val: string) => void;
+  readOnly?: boolean;
 }
 
 type TabType = 'html' | 'css' | 'js';
@@ -608,7 +609,7 @@ function jsCompletionSource(context: CompletionContext): CompletionResult | null
   };
 }
 
-export default function CodeEditor({ html, setHtml, css, setCss, js, setJs }: CodeEditorProps) {
+export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, readOnly = false }: CodeEditorProps) {
   const [activeTab, setActiveTab] = useState<TabType>('html');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -650,6 +651,8 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs }: Co
             extensions={[htmlLang()]}
             onChange={(value) => setHtml(value)}
             className={styles.cmWrapper}
+            readOnly={readOnly}
+            editable={!readOnly}
           />
         )}
         {activeTab === 'css' && (
@@ -660,6 +663,8 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs }: Co
             extensions={[cssLang()]}
             onChange={(value) => setCss(value)}
             className={styles.cmWrapper}
+            readOnly={readOnly}
+            editable={!readOnly}
           />
         )}
         {activeTab === 'js' && (
@@ -673,6 +678,8 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs }: Co
           ]}
             onChange={(value) => setJs(value)}
             className={styles.cmWrapper}
+            readOnly={readOnly}
+            editable={!readOnly}
           />
         )}
       </div>
