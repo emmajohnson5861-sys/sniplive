@@ -242,8 +242,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
 
   const forkSnippet = useCallback(async (original: Snippet | FirestoreSnippet) => {
     if (!firebaseUser) {
-      alert("You must be logged in to fork a snippet.");
-      return null;
+      return null; // Caller should open auth modal
     }
     const newId = crypto.randomUUID();
     try {
@@ -262,7 +261,6 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       return newId;
     } catch (e) {
       console.error(e);
-      alert("Failed to fork snippet.");
       return null;
     }
   }, [firebaseUser, user]);

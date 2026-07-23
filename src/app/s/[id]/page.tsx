@@ -4,10 +4,12 @@ import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToSnippet, FirestoreSnippet, updateSnippet, redeemInvite, incrementSnippetView, createSnippet } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
-import { Globe, User, Lock, Code2, Edit3, Save, Check, GitFork } from 'lucide-react';
+import { Globe, User, Lock, Code2, Edit3, Save, Check, GitFork, Home } from 'lucide-react';
 import LivePreview from '@/components/LivePreview';
 import CodeEditor from '@/components/CodeEditor';
 import AuthModal from '@/components/AuthModal';
+import { useToast } from '@/components/Toast';
+import Link from 'next/link';
 
 function SharedSnippetContent() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,7 @@ function SharedSnippetContent() {
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     initAuthListener();
@@ -35,9 +38,9 @@ function SharedSnippetContent() {
     if (inviteToken && firebaseUser && user?.email) {
       redeemInvite(inviteToken, user.email, firebaseUser.uid).then(res => {
         if (res.success) {
-          alert('Invite successfully redeemed! You now have access.');
+          showToast('Invite redeemed! You now have edit access.', 'success');
         } else if (res.message !== 'Invite already redeemed.') {
-          alert(res.message);
+          showToast(res.message, 'error');
         }
       });
     }
@@ -106,7 +109,7 @@ function SharedSnippetContent() {
       });
       router.push('/');
     } catch (e) {
-      alert("Failed to fork snippet.");
+      showToast('Failed to fork snippet. Please try again.', 'error');
     }
   };
 
@@ -142,10 +145,11 @@ function SharedSnippetContent() {
         
         {/* Branding & Title Area */}
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', textDecoration: 'none', cursor: 'pointer', transition: 'opacity 0.15s' }} title="Back to Home">
             <Code2 size={22} color="var(--accent-primary)" />
             <span style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-primary)' }}>SnipLive</span>
-          </div>
+            <Home size={14} color="var(--text-secondary)" style={{ marginLeft: 'auto' }} />
+          </Link>
           <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.25rem', wordBreak: 'break-word' }}>
             {snippet.title}
           </div>

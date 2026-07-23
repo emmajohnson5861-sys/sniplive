@@ -5,6 +5,7 @@ import { Globe, Lock, Check, X, Copy, Mail } from 'lucide-react';
 import { FirestoreUser, getUser, createInvite, toggleGroupVisibility, approveGroupAccess } from '@/lib/firebase-db';
 import { Group } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
+import { useToast } from '@/components/Toast';
 
 interface GroupShareModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface GroupShareModalProps {
 
 export default function GroupShareModal({ isOpen, onClose, group }: GroupShareModalProps) {
   const { user: currentUser } = useAuthStore();
+  const { showToast } = useToast();
   const [isPublic, setIsPublic] = useState(group.isPublic || false);
   const [collaborators, setCollaborators] = useState<FirestoreUser[]>([]);
   const [shareLink, setShareLink] = useState('');
@@ -42,7 +44,7 @@ export default function GroupShareModal({ isOpen, onClose, group }: GroupShareMo
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareLink);
-    alert('Link copied to clipboard!');
+    showToast('Link copied to clipboard!', 'success');
   };
 
   const handleCreateInvite = async () => {

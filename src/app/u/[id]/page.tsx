@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getUser, getPublicUserSnippets, getPublicUserGroups, getUserSnippets, FirestoreUser, FirestoreSnippet, FirestoreGroup } from '@/lib/firebase-db';
-import { User, Code2, Folder, Globe } from 'lucide-react';
+import { User, Code2, Folder, Globe, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import SnippetPreviewCard from '@/components/SnippetPreviewCard';
@@ -67,7 +67,20 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '2rem' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      {/* Top nav bar with home link */}
+      <div style={{ padding: '0.85rem 2rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 700, fontSize: '1.1rem' }}>
+          <Code2 size={20} color="var(--accent-primary)" />
+          <span>SnipLive</span>
+        </Link>
+        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>/</span>
+        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Profile</span>
+        <Link href="/" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+          <Home size={14} /> Home
+        </Link>
+      </div>
+      <div style={{ padding: '2rem' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
         {/* Profile Header */}
@@ -121,6 +134,7 @@ export default function UserProfilePage() {
           )}
         </div>
 
+      </div>
       </div>
     </div>
   );

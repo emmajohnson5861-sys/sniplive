@@ -4,10 +4,12 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { subscribeToGroup, FirestoreGroup, FirestoreSnippet, getSnippet, updateSnippet, redeemInvite } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
-import { Globe, User, Lock, Folder, Edit3, Save, Check, Code2, ChevronRight } from 'lucide-react';
+import { Globe, User, Lock, Folder, Edit3, Save, Check, Code2, ChevronRight, Home } from 'lucide-react';
 import LivePreview from '@/components/LivePreview';
 import CodeEditor from '@/components/CodeEditor';
 import AuthModal from '@/components/AuthModal';
+import { useToast } from '@/components/Toast';
+import Link from 'next/link';
 
 function SharedGroupContent() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +27,7 @@ function SharedGroupContent() {
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     initAuthListener();
@@ -36,9 +39,9 @@ function SharedGroupContent() {
     if (inviteToken && firebaseUser && user?.email) {
       redeemInvite(inviteToken, user.email, firebaseUser.uid).then(res => {
         if (res.success) {
-          alert('Invite successfully redeemed! You now have access.');
+          showToast('Invite redeemed! You now have access.', 'success');
         } else if (res.message !== 'Invite already redeemed.') {
-          alert(res.message);
+          showToast(res.message, 'error');
         }
       });
     }
@@ -138,10 +141,12 @@ function SharedGroupContent() {
         
         {/* Branding & Group Title */}
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', textDecoration: 'none', cursor: 'pointer', transition: 'opacity 0.15s' }} title="Back to Home">
             <Folder size={22} color="var(--accent-primary)" />
-            <span style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-primary)' }}>Collection</span>
-          </div>
+            <span style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-primary)' }}>SnipLive</span>
+            <Home size={14} color="var(--text-secondary)" style={{ marginLeft: 'auto' }} />
+          </Link>
+          <div style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Collection</div>
           <div style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem', wordBreak: 'break-word' }}>
             {group.title}
           </div>

@@ -5,11 +5,13 @@ import styles from './Header.module.css';
 import { Share2, Save, Trash2, Globe, Lock, Check, X, Copy, FolderPlus, Folder, Mail } from 'lucide-react';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
+import { useToast } from '@/components/Toast';
 import { updateSnippetVisibility, approveAccess, denyAccess, removeCollaborator, createNotification, getUser, FirestoreUser, createInvite } from '@/lib/firebase-db';
 
 export default function Header() {
   const { activeSnippet, groups, addSnippetToGroup, removeSnippetFromGroup, updateSnippetTitle, deleteSnippet, saveSnippet } = useSnippetContext();
   const { user: currentUser, firebaseUser } = useAuthStore();
+  const { showToast } = useToast();
   const [title, setTitle] = useState(activeSnippet?.title || 'Untitled Snippet');
   const [isSaved, setIsSaved] = useState(true);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -128,7 +130,7 @@ export default function Header() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(shareLink);
-    alert('Link copied to clipboard!');
+    showToast('Link copied to clipboard!', 'success');
   };
 
   const handleCreateInvite = async () => {
