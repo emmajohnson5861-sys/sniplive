@@ -1,7 +1,7 @@
 .header {
   height: 60px;
   border-bottom: 1px solid var(--border-color);
-  padding: 0 1.5rem;
+  padding: 0 var(--space-6);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12,7 +12,7 @@
 .titleArea {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex: 1;
 }
 
@@ -22,7 +22,7 @@
   color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   outline: none;
   width: 100%;
@@ -49,5 +49,99 @@
 .actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+}
+
+.visibilityBadge {
+  font-size: 0.75rem;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 12px;
+  text-transform: capitalize;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.visibilityBadge:hover {
+  background: var(--border-color);
+}
+
+.visibilityBadge.public {
+  color: #3fb950;
+  background: rgba(46, 160, 67, 0.1);
+  border-color: rgba(46, 160, 67, 0.2);
+}
+
+.visibilityBadge.public:hover {
+  background: rgba(46, 160, 67, 0.2);
+}
+
+.visibilityBadge.private, .visibilityBadge.unlisted {
+  color: var(--text-secondary);
+}
+
+.dropdownContainer {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-2);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  z-index: 10;
+  min-width: 220px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.dropdownHeader {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+  padding: 0 var(--space-2);
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+
+.dropdownItem:hover {
+  background: var(--bg-tertiary);
+}
+
+.dropdownItem.active {
+  background: var(--bg-tertiary);
+}
+
+.dropdownItemDanger {
+  color: var(--error);
+}
+
+.dropdownItemDanger:hover {
+  background: rgba(196, 90, 90, 0.1);
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  height: 60px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  width: 100%;
 }

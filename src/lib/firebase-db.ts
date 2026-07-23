@@ -7,6 +7,7 @@ import {
 
 export interface FirestoreUser {
   id: string;
+  username?: string;
   email: string;
   name: string | null;
   avatarUrl: string | null;
@@ -58,6 +59,24 @@ export async function getUser(uid: string): Promise<FirestoreUser | null> {
   const snap = await getDoc(doc(db, 'users', uid));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as FirestoreUser;
+}
+
+export async function getUserByUsernameOrId(identifier: string): Promise<FirestoreUser | null> {
+  // First try by ID
+  const snap = await getDoc(doc(db, 'users', identifier));
+  if (snap.exists()) {
+    return { id: snap.id, ...snap.data() } as FirestoreUser;
+  }
+  
+  // Then try by username
+  const q = query(collection(db, 'users'), where('username', '==', identifier), limit(1));
+  const docsSnap = await getDocs(q);
+  if (!docsSnap.empty) {
+    const docSnap = docsSnap.docs[0];
+    return { id: docSnap.id, ...docSnap.data() } as FirestoreUser;
+  }
+  
+  return null;
 }
 
 export async function getUsers(options?: { search?: string; page?: number; limitSize?: number }) {

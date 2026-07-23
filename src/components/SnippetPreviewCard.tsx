@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FirestoreSnippet } from '@/lib/firebase-db';
 import { Eye, Heart } from 'lucide-react';
+import styles from './SnippetPreviewCard.module.css';
 
 interface SnippetPreviewCardProps {
   snippet: FirestoreSnippet;
@@ -53,43 +54,46 @@ export default function SnippetPreviewCard({ snippet, isOwner }: SnippetPreviewC
   `;
 
   return (
-    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border-color)', transition: 'transform 0.2s', cursor: 'pointer' }}
-         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
-      
-      <Link href={`/s/${snippet.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div ref={containerRef} className={styles.cardContainer}>
+      <Link href={`/s/${snippet.id}`} className={styles.linkWrapper}>
         {/* Preview Area */}
-        <div style={{ position: 'relative', width: '100%', paddingTop: '60%', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', overflow: 'hidden' }}>
+        <div className={styles.previewArea}>
+          
+          {/* Editor Chrome Bar */}
+          <div className={styles.chromeBar}>
+            <div className={styles.chromeDot} />
+            <div className={styles.chromeDot} />
+            <div 
+              className={`${styles.chromeDotRightmost} ${styles[snippet.visibility || 'private']}`} 
+              title={isOwner ? `Visibility: ${snippet.visibility || 'private'}` : undefined}
+            />
+          </div>
+
           {/* Overlay to prevent interactions with iframe */}
-          <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}></div>
+          <div className={styles.overlay}></div>
           {isVisible && (
             <iframe
               srcDoc={srcDoc}
               sandbox="allow-scripts"
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+              className={styles.iframeContainer}
               tabIndex={-1}
             />
           )}
         </div>
 
         {/* Info Area */}
-        <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div className={styles.infoArea}>
+          <div className={styles.titleRow}>
+            <h3 className={styles.title} title={snippet.title}>
               {snippet.title}
             </h3>
-            {isOwner && (
-              <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '12px', background: snippet.visibility === 'public' ? 'rgba(46, 160, 67, 0.2)' : 'rgba(255, 255, 255, 0.1)', color: snippet.visibility === 'public' ? '#3fb950' : 'var(--text-secondary)', textTransform: 'capitalize' }}>
-                {snippet.visibility}
-              </span>
-            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '0.5rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+          <div className={styles.statsRow}>
+            <div className={styles.stats}>
+              <span className={styles.statItem}>
                 <Eye size={14} /> {snippet.viewCount || 0}
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+              <span className={styles.statItem}>
                 <Heart size={14} /> {snippet.likeCount || 0}
               </span>
             </div>

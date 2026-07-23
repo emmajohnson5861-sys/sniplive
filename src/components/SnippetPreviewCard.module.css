@@ -1,0 +1,133 @@
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s, border-color 0.2s;
+  cursor: pointer;
+  height: 100%;
+}
+
+.cardContainer:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-primary);
+}
+
+.linkWrapper {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.previewArea {
+  position: relative;
+  width: 100%;
+  padding-top: 60%;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.chromeBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 28px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  gap: var(--space-2);
+  z-index: 15;
+}
+
+.chromeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.chromeDotRightmost {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chromeDotRightmost.public {
+  background: var(--accent-primary);
+}
+
+.chromeDotRightmost.private, .chromeDotRightmost.unlisted {
+  background: var(--text-secondary);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  top: 28px; /* Below chrome bar */
+  z-index: 10;
+}
+
+.iframeContainer {
+  position: absolute;
+  top: 28px; /* Below chrome bar */
+  left: 0;
+  width: 100%;
+  height: calc(100% - 28px);
+  border: none;
+  pointer-events: none;
+}
+
+.infoArea {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}

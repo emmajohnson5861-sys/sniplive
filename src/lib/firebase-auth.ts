@@ -24,7 +24,25 @@ export async function signOutUser(): Promise<void> {
   await signOut(auth);
 }
 
-async function ensureUserDoc(user: User): Promise<void> {
+async function generateUniqueUsername(base: string): Promise<string> {
+  const cleanBase = base.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+  let username = cleanBase;
+  const usersRef = collection(db, 'users');
+  
+  let q = query(usersRef, where('username', '==', username));
+  let snap = await getDocs(q);
+  if (snap.empty) return username;
+
+  while (true) {
+    const suffix = Math.floor(Math.random() * 10000).toString();
+    const tryUsername = `${cleanBase}${suffix}`;
+    const q2 = query(usersRef, where('username', '==', tryUsername));
+    const snap2 = await getDocs(q2);
+    if (snap2.empty) return tryUsername;
+  }
+}
+
+export async function ensureUserDoc(user: User): Promise<void> {
   const userRef = doc(db, 'users', user.uid);
   const snap = await getDoc(userRef);
 
@@ -33,7 +51,11 @@ async function ensureUserDoc(user: User): Promise<void> {
     const adminSnap = await getDocs(q);
     const isFirst = adminSnap.size === 0;
 
+    const baseName = user.displayName || (user.email ? user.email.split('@')[0] : 'user');
+    const username = await generateUniqueUsername(baseName);
+
     await setDoc(userRef, {
+      username,
       email: user.email,
       name: user.displayName,
       avatarUrl: user.photoURL,
@@ -45,6 +67,12 @@ async function ensureUserDoc(user: User): Promise<void> {
       createdAt: serverTimestamp(),
     });
   } else {
-    await setDoc(userRef, { lastActiveAt: serverTimestamp(), avatarUrl: user.photoURL }, { merge: true });
+    const data = snap.data();
+    let updates: any = { lastActiveAt: serverTimestamp(), avatarUrl: user.photoURL };
+    if (!data.username) {
+      const baseName = user.displayName || (user.email ? user.email.split('@')[0] : 'user');
+      updates.username = await generateUniqueUsername(baseName);
+    }
+    await setDoc(userRef, updates, { merge: true });
   }
 }

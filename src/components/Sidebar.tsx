@@ -59,7 +59,6 @@ export default function Sidebar() {
 
         <div className={styles.actions}>
           <button className="btn-primary w-full" onClick={() => {
-            console.log("Button 'New Snippet' clicked in Sidebar!");
             createNewSnippet();
           }}>
             <Plus size={16} />
@@ -109,14 +108,14 @@ export default function Sidebar() {
 
         {firebaseUser && (
           <>
-            <div className={styles.libraryHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+            <div className={styles.libraryHeader}>
               Collections
-              <button onClick={handleCreateGroup} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <button onClick={handleCreateGroup} title="New Collection">
                 <FolderPlus size={16} />
               </button>
             </div>
             
-            <div className={styles.snippetList} style={{ maxHeight: '20vh' }}>
+            <div className={styles.groupList}>
               {filteredGroups.map(group => (
                 <div 
                   key={group.id} 
@@ -156,11 +155,11 @@ export default function Sidebar() {
           {initialized && user ? (
             <>
               {user.avatarUrl && <img src={user.avatarUrl} alt="" className={styles.avatar} />}
-              <div className={styles.userInfo} style={{ flex: 1, minWidth: 0 }}>
+              <div className={styles.userInfo}>
                 <span className={styles.userName}>{user.name || user.email}</span>
                 <span className={styles.userEmail}>{user.email}</span>
               </div>
-              <button className={styles.adminBtn} onClick={() => router.push(`/u/${firebaseUser?.uid}`)} title="My Public Profile">
+              <button className={styles.adminBtn} onClick={() => router.push(`/u/${user.username || firebaseUser?.uid}`)} title="My Public Profile">
                 <Globe size={16} />
               </button>
               {user.role === 'ADMIN' && (

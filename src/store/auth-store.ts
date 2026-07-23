@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@firebase/auth';
-import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/firebase-auth';
+import { onAuthChange, signInWithGoogle, signOutUser, ensureUserDoc } from '@/lib/firebase-auth';
 import { getUser, FirestoreUser } from '@/lib/firebase-db';
 
 interface AuthState {
@@ -45,7 +45,11 @@ export function initAuthListener() {
   onAuthChange(async (fbUser) => {
     if (fbUser) {
       try {
-        const userData = await getUser(fbUser.uid);
+        let userData = await getUser(fbUser.uid);
+        if (userData && !userData.username) {
+          await ensureUserDoc(fbUser);
+          userData = await getUser(fbUser.uid);
+        }
         store.setState({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
       } catch (err) {
         store.setState({ firebaseUser: fbUser, user: null, loading: false, initialized: true });
