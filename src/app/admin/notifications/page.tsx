@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead, Notification, approveAccess, denyAccess } from '@/lib/firebase-db';
-import { Bell, CheckCheck, UserPlus, Check, X, ExternalLink } from 'lucide-react';
+import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead, Notification, approveAccess, denyAccess, updateUser } from '@/lib/firebase-db';
+import { Bell, CheckCheck, UserPlus, Check, X, ExternalLink, ShieldAlert } from 'lucide-react';
 
 export default function AdminNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -37,10 +37,26 @@ export default function AdminNotifications() {
   const handleDeny = async (e: React.MouseEvent, n: Notification) => {
     e.stopPropagation();
     try {
-      await denyAccess(n.snippetId, n.fromUserId);
+      if (n.type === 'UNBAN_REQUEST') {
+        // Just mark as read
+      } else {
+        await denyAccess(n.snippetId, n.fromUserId);
+      }
       await handleMarkRead(n.id);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleApproveUnban = async (e: React.MouseEvent, n: Notification) => {
+    e.stopPropagation();
+    try {
+      await updateUser(n.fromUserId, { isBanned: false } as any);
+      await handleMarkRead(n.id);
+      alert(`${n.fromUserName || n.fromUserEmail} has been unbanned.`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to unban user.');
     }
   };
 
@@ -54,6 +70,7 @@ export default function AdminNotifications() {
       case 'ACCESS_REQUEST': return <UserPlus size={16} style={{color:'var(--accent-primary)'}} />;
       case 'ACCESS_GRANTED': return <Check size={16} style={{color:'var(--success)'}} />;
       case 'ACCESS_DENIED': return <X size={16} style={{color:'var(--error)'}} />;
+      case 'UNBAN_REQUEST': return <ShieldAlert size={16} style={{color:'var(--error)'}} />;
       default: return <Bell size={16} />;
     }
   };
@@ -63,6 +80,7 @@ export default function AdminNotifications() {
       case 'ACCESS_REQUEST': return `${n.fromUserName || n.fromUserEmail} requested edit access to "${n.snippetTitle}"`;
       case 'ACCESS_GRANTED': return `You were granted edit access to "${n.snippetTitle}"`;
       case 'ACCESS_DENIED': return `Access denied for "${n.snippetTitle}"`;
+      case 'UNBAN_REQUEST': return `${n.fromUserName || n.fromUserEmail} requested to be unbanned.`;
       default: return '';
     }
   };
@@ -107,6 +125,12 @@ export default function AdminNotifications() {
                   <div style={{display:'flex', gap:'0.5rem', marginTop:'0.5rem'}}>
                     <button className="btn-primary" style={{padding:'0.25rem 0.75rem', fontSize:'0.75rem'}} onClick={(e) => handleApprove(e, n)}>Approve</button>
                     <button className="btn-secondary" style={{padding:'0.25rem 0.75rem', fontSize:'0.75rem', background:'var(--bg-primary)'}} onClick={(e) => handleDeny(e, n)}>Deny</button>
+                  </div>
+                )}
+                {n.type === 'UNBAN_REQUEST' && !n.read && (
+                  <div style={{display:'flex', gap:'0.5rem', marginTop:'0.5rem'}}>
+                    <button className="btn-primary" style={{padding:'0.25rem 0.75rem', fontSize:'0.75rem', background:'var(--success)', borderColor:'var(--success)'}} onClick={(e) => handleApproveUnban(e, n)}>Allow (Unban)</button>
+                    <button className="btn-secondary" style={{padding:'0.25rem 0.75rem', fontSize:'0.75rem', background:'var(--bg-primary)'}} onClick={(e) => handleDeny(e, n)}>Ignore</button>
                   </div>
                 )}
               </div>

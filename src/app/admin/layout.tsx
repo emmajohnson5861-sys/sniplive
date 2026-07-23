@@ -19,13 +19,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if (initialized && (!user || user.role !== 'ADMIN')) {
+    if (initialized && (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR') || user.isBanned)) {
       router.push('/');
     }
   }, [initialized, user, router]);
 
   useEffect(() => {
-    if (user?.role === 'ADMIN') {
+    if (user?.role === 'ADMIN' || user?.role === 'EDITOR') {
       const fetch = async () => {
         try {
           const n = await getUnreadNotificationCount();
@@ -45,7 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/notifications', label: 'Notifications', icon: Bell, badge: unread },
   ];
 
-  if (loading || !initialized || !user || user.role !== 'ADMIN') {
+  if (loading || !initialized || !user || (user.role !== 'ADMIN' && user.role !== 'EDITOR') || user.isBanned) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <p>Checking access...</p>

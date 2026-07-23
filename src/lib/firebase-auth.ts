@@ -59,7 +59,7 @@ export async function ensureUserDoc(user: User): Promise<void> {
       email: user.email,
       name: user.displayName,
       avatarUrl: user.photoURL,
-      role: isFirst ? 'ADMIN' : 'USER',
+      role: isFirst ? 'ADMIN' : 'SUBSCRIBER',
       isBanned: false,
       snippetCount: 0,
       storageUsage: 0,

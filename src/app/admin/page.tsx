@@ -11,6 +11,7 @@ interface Stats {
   snippetsCreatedToday: number;
   bannedUsers: number;
   unreadNotifications: number;
+  totalViews: number;
 }
 
 export default function AdminDashboard() {
@@ -30,6 +31,8 @@ export default function AdminDashboard() {
   const cards = [
     { label: 'Total Users', value: stats.totalUsers },
     { label: 'Total Snippets', value: stats.totalSnippets },
+    { label: 'Total Site Views', value: stats.totalViews },
+    { label: 'Snippets Today', value: stats.snippetsCreatedToday },
     { label: 'Reported Snippets', value: stats.reportedSnippets, warn: stats.reportedSnippets > 0 },
     { label: 'New Users (Month)', value: stats.newUsersThisMonth },
     { label: 'Unread Notifications', value: stats.unreadNotifications, warn: stats.unreadNotifications > 0 },

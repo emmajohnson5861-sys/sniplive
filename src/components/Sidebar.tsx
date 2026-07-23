@@ -162,7 +162,7 @@ export default function Sidebar() {
               <button className={styles.adminBtn} onClick={() => router.push(`/u/${user.username || firebaseUser?.uid}`)} title="My Public Profile">
                 <Globe size={16} />
               </button>
-              {user.role === 'ADMIN' && (
+              {(user.role === 'ADMIN' || user.role === 'EDITOR') && (
                 <button className={styles.adminBtn} onClick={() => router.push('/admin')} title="Admin Panel">
                   <Shield size={16} />
                 </button>

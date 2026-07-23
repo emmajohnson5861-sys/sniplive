@@ -11,7 +11,7 @@ export interface FirestoreUser {
   email: string;
   name: string | null;
   avatarUrl: string | null;
-  role: 'USER' | 'ADMIN';
+  role: 'SUBSCRIBER' | 'EDITOR' | 'ADMIN';
   isBanned: boolean;
   snippetCount: number;
   storageUsage: number;
@@ -43,7 +43,7 @@ export interface FirestoreSnippet {
 
 export interface Notification {
   id: string;
-  type: 'ACCESS_REQUEST' | 'ACCESS_GRANTED' | 'ACCESS_DENIED';
+  type: 'ACCESS_REQUEST' | 'ACCESS_GRANTED' | 'ACCESS_DENIED' | 'UNBAN_REQUEST';
   fromUserId: string;
   fromUserName: string | null;
   fromUserEmail: string;
@@ -51,6 +51,32 @@ export interface Notification {
   snippetTitle: string;
   read: boolean;
   createdAt: Timestamp | null;
+}
+
+export async function sendNotification(data: {
+  type: 'ACCESS_REQUEST' | 'ACCESS_GRANTED' | 'ACCESS_DENIED' | 'UNBAN_REQUEST';
+  fromUserId: string;
+  fromUserName: string | null;
+  fromUserEmail: string;
+  snippetId?: string;
+  snippetTitle?: string;
+}) {
+  const q = query(collection(db, 'notifications'), 
+    where('fromUserId', '==', data.fromUserId),
+    where('snippetId', '==', data.snippetId || 'none'),
+    where('type', '==', data.type)
+  );
+  const existing = await getDocs(q);
+  if (!existing.empty) return; // already sent
+
+  const notifRef = doc(collection(db, 'notifications'));
+  await setDoc(notifRef, {
+    ...data,
+    snippetId: data.snippetId || 'none',
+    snippetTitle: data.snippetTitle || '',
+    read: false,
+    createdAt: serverTimestamp(),
+  });
 }
 
 // ─── Users ──────────────────────────────────────────
@@ -445,7 +471,7 @@ export async function getRecentSnippets(limitSize = 20): Promise<FirestoreSnippe
 export async function getStats(): Promise<{
   totalUsers: number; totalSnippets: number; reportedSnippets: number;
   newUsersThisMonth: number; snippetsCreatedToday: number; bannedUsers: number;
-  unreadNotifications: number;
+  unreadNotifications: number; totalViews: number;
 }> {
   const [usersSnap, snippetsSnap, reportedSnap, bannedSnap, notifSnap] = await Promise.all([
     getDocs(collection(db, 'users')),
@@ -461,6 +487,7 @@ export async function getStats(): Promise<{
 
   let newUsersThisMonth = 0;
   let snippetsCreatedToday = 0;
+  let totalViews = 0;
 
   usersSnap.forEach(d => {
     const data = d.data();
@@ -469,13 +496,14 @@ export async function getStats(): Promise<{
   snippetsSnap.forEach(d => {
     const data = d.data();
     if (data.createdAt?.toDate() >= dayStart) snippetsCreatedToday++;
+    totalViews += (data.viewCount || 0);
   });
 
   return {
     totalUsers: usersSnap.size, totalSnippets: snippetsSnap.size,
     reportedSnippets: reportedSnap.size, newUsersThisMonth,
     snippetsCreatedToday, bannedUsers: bannedSnap.size,
-    unreadNotifications: notifSnap.size,
+    unreadNotifications: notifSnap.size, totalViews,
   };
 }
 

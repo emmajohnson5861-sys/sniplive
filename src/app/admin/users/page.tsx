@@ -43,10 +43,8 @@ export default function AdminUsers() {
     fetchUsers();
   };
 
-  const toggleRole = async (u: FirestoreUser) => {
-    const newRole = u.role === 'ADMIN' ? 'USER' : 'ADMIN';
-    const label = newRole === 'ADMIN' ? 'promote' : 'demote';
-    if (!confirm(`Are you sure you want to ${label} ${u.email}?`)) return;
+  const handleRoleChange = async (u: FirestoreUser, newRole: 'SUBSCRIBER' | 'EDITOR' | 'ADMIN') => {
+    if (!confirm(`Change ${u.email}'s role to ${newRole}?`)) return;
     await updateUser(u.id, { role: newRole } as any);
     fetchUsers();
   };
@@ -63,6 +61,20 @@ export default function AdminUsers() {
 
   const admins = users.filter(u => u.role === 'ADMIN');
   const regularUsers = users.filter(u => u.role === 'USER');
+  
+  const mainAdmin = admins.reduce((oldest, current) => {
+    if (!oldest || !oldest.createdAt) return current;
+    if (!current || !current.createdAt) return oldest;
+    return current.createdAt.seconds < oldest.createdAt.seconds ? current : oldest;
+  }, admins[0]);
+  const mainAdminId = mainAdmin?.id;
+
+  const canEditUser = (u: FirestoreUser) => {
+    if (currentUser?.role === 'EDITOR') return false;
+    if (u.id === mainAdminId) return false;
+    if (u.id === currentUser?.id) return false;
+    return true;
+  };
 
   return (
     <div>
@@ -97,20 +109,31 @@ export default function AdminUsers() {
                 <div style={{fontWeight:600, color:'var(--text-primary)', fontSize:'0.9rem'}}>{u.name || 'Unnamed'}</div>
                 <div style={{color:'var(--text-secondary)', fontSize:'0.8rem'}}>{u.email}</div>
               </div>
-              {currentUser?.id !== u.id && (
-                <div style={{display:'flex', gap:'0.25rem'}}>
-                  <button onClick={() => toggleRole(u)} title="Demote to user" style={{
-                    padding:'0.35rem 0.6rem', borderRadius:'var(--radius-sm)', border:'1px solid var(--border-color)',
-                    background:'transparent', color:'var(--text-secondary)', cursor:'pointer',
-                  }}><Shield size={14} /></button>
+              {canEditUser(u) && (
+                <div style={{display:'flex', gap:'0.25rem', alignItems: 'center'}}>
+                  <select 
+                    value={u.role} 
+                    onChange={(e) => handleRoleChange(u, e.target.value as any)}
+                    style={{
+                      padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+                      background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none'
+                    }}
+                  >
+                    <option value="SUBSCRIBER">Subscriber</option>
+                    <option value="EDITOR">Editor</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
                   <button onClick={() => handleDelete(u.id)} title="Delete admin" style={{
                     padding:'0.35rem 0.6rem', borderRadius:'var(--radius-sm)', border:'1px solid var(--error)',
                     background:'transparent', color:'var(--error)', cursor:'pointer',
                   }}><Trash2 size={14} /></button>
                 </div>
               )}
-              {currentUser?.id === u.id && (
+              {currentUser?.id === u.id && u.id !== mainAdminId && (
                 <span style={{fontSize:'0.8rem', color:'var(--accent-primary)', fontWeight:500}}>You</span>
+              )}
+              {u.id === mainAdminId && (
+                <span style={{fontSize:'0.8rem', color:'var(--accent-primary)', fontWeight:500}}>Main Admin</span>
               )}
             </div>
           ))}
@@ -149,7 +172,7 @@ export default function AdminUsers() {
                     </div>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: u.role === 'ADMIN' ? 'var(--accent-primary)' : 'var(--text-secondary)', fontWeight: u.role === 'ADMIN' ? 600 : 400 }}>
-                    {u.role === 'ADMIN' ? <><Crown size={12} style={{marginRight:'0.25rem'}} /> Admin</> : 'User'}
+                    {u.role === 'ADMIN' ? <><Crown size={12} style={{marginRight:'0.25rem'}} /> Admin</> : u.role === 'EDITOR' ? 'Editor' : 'Subscriber'}
                   </td>
                   <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>{u.snippetCount}</td>
                   <td style={{ padding: '0.75rem 1rem' }}>
@@ -158,12 +181,20 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td style={{ padding: '0.75rem 1rem' }}>
-                    {currentUser?.id !== u.id ? (
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button onClick={() => toggleRole(u)} title={u.role === 'ADMIN' ? 'Demote to user' : 'Promote to admin'} style={{
-                          padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
-                          background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
-                        }}><Shield size={14} /></button>
+                    {canEditUser(u) && (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <select 
+                          value={u.role} 
+                          onChange={(e) => handleRoleChange(u, e.target.value as any)}
+                          style={{
+                            padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none'
+                          }}
+                        >
+                          <option value="SUBSCRIBER">Subscriber</option>
+                          <option value="EDITOR">Editor</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
                         <button onClick={() => toggleBan(u)} title={u.isBanned ? 'Unban' : 'Ban'} style={{
                           padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
                           background: 'transparent', color: u.isBanned ? 'var(--success)' : 'var(--error)', cursor: 'pointer',
@@ -173,8 +204,12 @@ export default function AdminUsers() {
                           background: 'transparent', color: 'var(--error)', cursor: 'pointer',
                         }}><Trash2 size={14} /></button>
                       </div>
-                    ) : (
+                    )}
+                    {currentUser?.id === u.id && u.id !== mainAdminId && (
                       <span style={{fontSize:'0.8rem', color:'var(--text-secondary)'}}>You</span>
+                    )}
+                    {u.id === mainAdminId && (
+                      <span style={{fontSize:'0.8rem', color:'var(--accent-primary)', fontWeight:500}}>Main Admin</span>
                     )}
                   </td>
                 </tr>

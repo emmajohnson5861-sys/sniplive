@@ -14,7 +14,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (initialized) {
-      router.push(user ? (user.role === 'ADMIN' ? '/admin' : '/') : '/');
+      router.push(user ? ((user.role === 'ADMIN' || user.role === 'EDITOR') ? '/admin' : '/') : '/');
     }
   }, [initialized, user, router]);
 
