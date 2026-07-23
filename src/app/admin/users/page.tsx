@@ -36,7 +36,7 @@ export default function AdminUsers() {
   const toggleBan = async (u: FirestoreUser) => {
     if (u.role === 'ADMIN') {
       if (!confirm(`Ban admin ${u.email}? They will lose admin access.`)) return;
-      await updateUser(u.id, { isBanned: !u.isBanned, role: 'USER' } as any);
+      await updateUser(u.id, { isBanned: !u.isBanned, role: 'SUBSCRIBER' } as any);
     } else {
       await updateUser(u.id, { isBanned: !u.isBanned } as any);
     }
@@ -60,7 +60,7 @@ export default function AdminUsers() {
   };
 
   const admins = users.filter(u => u.role === 'ADMIN');
-  const regularUsers = users.filter(u => u.role === 'USER');
+  const regularUsers = users.filter(u => u.role !== 'ADMIN');
   
   const mainAdmin = admins.reduce((oldest, current) => {
     if (!oldest || !oldest.createdAt) return current;
