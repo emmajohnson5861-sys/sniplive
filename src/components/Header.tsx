@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './Header.module.css';
-import { Share2, Save, Trash2, Globe, Lock, Check, X, Copy, FolderPlus, Folder, Mail, MoreHorizontal, Code2 } from 'lucide-react';
+import { Share2, Save, Trash2, Globe, Lock, Check, X, Copy, FolderPlus, Folder, Mail, MoreHorizontal, Code2, Menu } from 'lucide-react';
 import { useSnippetContext } from '@/context/SnippetContext';
+import { useSidebar } from '@/context/SidebarContext';
 import { useAuthStore } from '@/store/auth-store';
 import { useToast } from '@/components/Toast';
 import Modal from '@/components/Modal';
@@ -12,6 +13,7 @@ import { updateSnippetVisibility, approveAccess, denyAccess, removeCollaborator,
 export default function Header() {
   const { activeSnippet, groups, addSnippetToGroup, removeSnippetFromGroup, updateSnippetTitle, deleteSnippet, saveSnippet } = useSnippetContext();
   const { user: currentUser, firebaseUser } = useAuthStore();
+  const { toggle: toggleSidebar } = useSidebar();
   const { showToast } = useToast();
   const [title, setTitle] = useState(activeSnippet?.title || 'Untitled Snippet');
   const [isSaved, setIsSaved] = useState(true);
@@ -165,6 +167,9 @@ export default function Header() {
   return (
     <>
       <header className={styles.header}>
+        <button className={`${styles.menuBtn} btn-secondary`} onClick={toggleSidebar} title="Toggle menu">
+          <Menu size={20} />
+        </button>
         <div className={styles.titleArea}>
           <input 
             type="text" 
@@ -245,13 +250,17 @@ export default function Header() {
             )}
           </div>
           
-          <button className="btn-secondary" onClick={() => setIsShareModalOpen(true)}>
+          <button className={`${styles.actionBtnText} btn-secondary`} onClick={() => setIsShareModalOpen(true)} title="Share">
             <Share2 size={16} />
-            Share
+            <span className={styles.btnLabel}>Share</span>
           </button>
-          <button className="btn-primary" onClick={handleSave}>
+          <button 
+            className={`${styles.actionBtnText} btn-primary`}
+            onClick={handleSave}
+            title="Save"
+          >
             <Save size={16} />
-            {isSaved ? 'Saved' : 'Save Snippet'}
+            <span className={styles.btnLabel}>{isSaved ? 'Saved' : 'Save'}</span>
           </button>
         </div>
       </header>

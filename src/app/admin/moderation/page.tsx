@@ -54,7 +54,7 @@ export default function AdminModeration() {
             <div key={s.id} style={{
               background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
               borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem',
-              display: 'flex', alignItems: 'center', gap: '1rem',
+              display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'
             }}>
               <Flag size={16} style={{ color: 'var(--error)', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>

@@ -12,6 +12,8 @@ export default function SplitPane() {
   const { activeSnippet, saveSnippet } = useSnippetContext();
   const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   
   // Local state for immediate typing performance
   const [htmlCode, setHtmlCode] = useState('');
@@ -69,8 +71,14 @@ export default function SplitPane() {
     }
   }, [htmlCode, cssCode, jsCode, activeSnippet, saveSnippet]);
 
-  const startDragging = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const startDragging = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     setIsDragging(true);
   }, []);
 
@@ -79,10 +87,21 @@ export default function SplitPane() {
   }, []);
 
   const onDrag = useCallback(
-    (e: MouseEvent) => {
+    (e: MouseEvent | TouchEvent) => {
       if (!isDragging) return;
-      const newLeftWidth = (e.clientX / window.innerWidth) * 100;
-      if (newLeftWidth > 10 && newLeftWidth < 90) {
+      let clientX = 0;
+      if ('touches' in e) {
+        clientX = e.touches[0].clientX;
+      } else {
+        clientX = e.clientX;
+      }
+      
+      const newLeftWidth = (clientX / window.innerWidth) * 100;
+      const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+      const minW = isTablet ? 25 : 10;
+      const maxW = isTablet ? 75 : 90;
+      
+      if (newLeftWidth > minW && newLeftWidth < maxW) {
         setLeftWidth(newLeftWidth);
       }
     },
@@ -93,13 +112,19 @@ export default function SplitPane() {
     if (isDragging) {
       window.addEventListener('mousemove', onDrag);
       window.addEventListener('mouseup', stopDragging);
+      window.addEventListener('touchmove', onDrag);
+      window.addEventListener('touchend', stopDragging);
     } else {
       window.removeEventListener('mousemove', onDrag);
       window.removeEventListener('mouseup', stopDragging);
+      window.removeEventListener('touchmove', onDrag);
+      window.removeEventListener('touchend', stopDragging);
     }
     return () => {
       window.removeEventListener('mousemove', onDrag);
       window.removeEventListener('mouseup', stopDragging);
+      window.removeEventListener('touchmove', onDrag);
+      window.removeEventListener('touchend', stopDragging);
     };
   }, [isDragging, onDrag, stopDragging]);
 
@@ -112,33 +137,57 @@ export default function SplitPane() {
   }
 
   return (
-    <div className={styles.splitPaneContainer}>
-      <div 
-        className={styles.pane} 
-        style={{ width: `${leftWidth}%` }}
-      >
-        <CodeEditor 
-          html={htmlCode} setHtml={setHtmlCode}
-          css={cssCode} setCss={setCssCode}
-          js={jsCode} setJs={setJsCode}
-        />
-      </div>
-      
-      <div 
-        className={styles.resizer} 
-        onMouseDown={startDragging}
-      >
-        <div className={styles.resizerHandle} />
-      </div>
-      
-      <div 
-        className={styles.pane} 
-        style={{ width: `${100 - leftWidth}%` }}
-      >
-        <div style={{ width: '100%', height: '100%', pointerEvents: isDragging ? 'none' : 'auto' }}>
-          <LivePreview html={htmlCode} css={cssCode} js={jsCode} />
+    <div className={`${styles.splitPaneContainer} ${isMobile ? styles.splitPaneContainerMobile : ''}`}>
+      {isMobile && (
+        <div className={styles.mobileTabs}>
+          <button 
+            className={`${styles.tabBtn} ${activeTab === 'code' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('code')}
+          >
+            Code
+          </button>
+          <button 
+            className={`${styles.tabBtn} ${activeTab === 'preview' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('preview')}
+          >
+            Preview
+          </button>
         </div>
-      </div>
+      )}
+
+      {(!isMobile || activeTab === 'code') && (
+        <div 
+          className={styles.pane} 
+          style={{ width: isMobile ? '100%' : `${leftWidth}%` }}
+        >
+          <CodeEditor 
+            html={htmlCode} setHtml={setHtmlCode}
+            css={cssCode} setCss={setCssCode}
+            js={jsCode} setJs={setJsCode}
+          />
+        </div>
+      )}
+      
+      {!isMobile && (
+        <div 
+          className={styles.resizer} 
+          onMouseDown={startDragging}
+          onTouchStart={startDragging}
+        >
+          <div className={styles.resizerHandle} />
+        </div>
+      )}
+      
+      {(!isMobile || activeTab === 'preview') && (
+        <div 
+          className={styles.pane} 
+          style={{ width: isMobile ? '100%' : `${100 - leftWidth}%` }}
+        >
+          <div style={{ width: '100%', height: '100%', pointerEvents: isDragging ? 'none' : 'auto' }}>
+            <LivePreview html={htmlCode} css={cssCode} js={jsCode} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

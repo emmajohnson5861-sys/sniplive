@@ -8,10 +8,12 @@ import { useSnippetContext, Group } from '@/context/SnippetContext';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import AuthModal from './AuthModal';
 import GroupShareModal from './GroupShareModal';
+import { useSidebar } from '@/context/SidebarContext';
 
 export default function Sidebar() {
   const { snippets, groups, activeSnippetId, setActiveSnippetId, createNewSnippet, deleteSnippet, createNewGroup, deleteGroup } = useSnippetContext();
   const { user, firebaseUser, initialized, logout } = useAuthStore();
+  const { isOpen, closeMobile } = useSidebar();
   const router = useRouter();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -49,7 +51,8 @@ export default function Sidebar() {
 
   return (
     <>
-      <div className={styles.sidebar}>
+      {isOpen && <div className={styles.overlay} onClick={closeMobile} />}
+      <div className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoArea}>
           <div className={styles.logo}>
             <Code2 size={24} color="var(--accent-primary)" />
@@ -85,8 +88,11 @@ export default function Sidebar() {
           {filteredSnippets.map(snippet => (
             <div 
               key={snippet.id} 
-              className={`${styles.snippetItem} ${snippet.id === activeSnippetId ? styles.active : ''}`}
-              onClick={() => setActiveSnippetId(snippet.id)}
+              className={`${styles.snippetItem} ${activeSnippetId === snippet.id ? styles.active : ''}`}
+              onClick={() => {
+                setActiveSnippetId(snippet.id);
+                closeMobile();
+              }}
             >
               <FileCode2 size={16} className={snippet.id === activeSnippetId ? styles.iconActive : styles.iconInactive} />
               <div className={styles.snippetInfo}>
@@ -120,7 +126,10 @@ export default function Sidebar() {
                 <div 
                   key={group.id} 
                   className={styles.snippetItem}
-                  onClick={() => router.push(`/g/${group.id}`)}
+                  onClick={() => {
+                    router.push(`/g/${group.id}`);
+                    closeMobile();
+                  }}
                 >
                   <Folder size={16} className={styles.iconInactive} />
                   <div className={styles.snippetInfo}>

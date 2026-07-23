@@ -1,3 +1,8 @@
+/* Breakpoint reference (use in @media queries throughout the app) */
+/* mobile:  0–639px   (single column, off-canvas nav, stacked editor/preview) */
+/* tablet:  640–1023px (collapsible nav, side-by-side editor/preview retained) */
+/* desktop: 1024px+   (current layout, unchanged) */
+
 :root {
   --bg-primary: #1E1E1E;
   --bg-secondary: #252526;

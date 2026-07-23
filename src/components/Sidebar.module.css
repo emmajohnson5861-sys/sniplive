@@ -5,6 +5,28 @@
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  z-index: 40;
+  transition: transform 0.2s ease, left 0.2s ease;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 30;
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+  }
+  .sidebarOpen {
+    left: 0;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+  }
 }
 
 .logoArea {
@@ -316,4 +338,14 @@
 .themeToggle:hover {
   background: var(--border-color);
   color: var(--text-primary);
+}
+
+@media (max-width: 1023px) {
+  .actionBtns {
+    opacity: 1;
+  }
+  .actionBtn, .adminBtn, .logoutBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }

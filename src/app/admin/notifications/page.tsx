@@ -110,7 +110,7 @@ export default function AdminNotifications() {
         <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
           {notifications.map(n => (
             <div key={n.id} style={{
-              display:'flex', alignItems:'center', gap:'0.75rem', padding:'0.75rem 1rem',
+              display:'flex', alignItems:'center', gap:'0.75rem', padding:'0.75rem 1rem', flexWrap: 'wrap',
               background: n.read ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
               border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)',
               cursor: 'pointer', opacity: n.read ? 0.7 : 1,

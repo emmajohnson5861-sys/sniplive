@@ -7,6 +7,7 @@ import { User, Code2, Folder, Globe, Home, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import SnippetPreviewCard from '@/components/SnippetPreviewCard';
+import styles from './ProfileClient.module.css';
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -102,12 +103,12 @@ export default function UserProfilePage() {
       <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
         {/* Profile Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'var(--bg-secondary)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
+        <div className={styles.profileHeader}>
+          <div className={styles.avatar}>
             <User size={40} color="var(--text-secondary)" />
           </div>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: 0 }}>{userProfile.name || 'Anonymous User'}</h1>
+          <div className={styles.info}>
+            <h1 className={styles.title}>{userProfile.name || 'Anonymous User'}</h1>
             <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
               <Globe size={16} /> {firebaseUser?.uid === id ? 'Your Profile' : 'Public Profile'}
             </div>
@@ -148,7 +149,7 @@ export default function UserProfilePage() {
                   <Folder size={20} color="var(--accent-primary)" />
                   Public Collections
                 </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                <div className={styles.grid}>
                   {groups.map(g => (
                     <Link key={g.id} href={`/g/${g.id}`} style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.2s', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
                       <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{g.title}</div>
@@ -171,7 +172,7 @@ export default function UserProfilePage() {
               {snippets.length === 0 ? (
                 <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No snippets available.</div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                <div className={styles.grid}>
                   {snippets.map(s => (
                     <SnippetPreviewCard key={s.id} snippet={s} isOwner={firebaseUser?.uid === id} />
                   ))}
