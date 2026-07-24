@@ -127,7 +127,7 @@ export default function Sidebar() {
                   key={group.id} 
                   className={styles.snippetItem}
                   onClick={() => {
-                    router.push(`/g/${group.id}`);
+                    router.push(`/${user?.username}/c/${group.slug || group.id}`);
                     closeMobile();
                   }}
                 >
@@ -168,7 +168,7 @@ export default function Sidebar() {
                 <span className={styles.userName}>{user.name || user.email}</span>
                 <span className={styles.userEmail}>{user.email}</span>
               </div>
-              <button className={styles.adminBtn} onClick={() => router.push(`/u/${user.username || firebaseUser?.uid}`)} title="My Public Profile">
+              <button className={styles.adminBtn} onClick={() => router.push(`/${user.username || firebaseUser?.uid}/profile`)} title="My Public Profile">
                 <Globe size={16} />
               </button>
               {(user.role === 'ADMIN' || user.role === 'EDITOR') && (

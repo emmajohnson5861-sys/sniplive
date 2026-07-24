@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { subscribeToGroup, FirestoreGroup, FirestoreSnippet, getSnippet, updateSnippet, redeemInvite } from '@/lib/firebase-db';
+import { subscribeToGroup, FirestoreGroup, FirestoreSnippet, getSnippet, updateSnippet, redeemInvite, getUserByUsernameOrId, getDocs, query, collection, where, db } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import { Globe, User, Lock, Folder, Edit3, Save, Check, Code2, ChevronRight, Home } from 'lucide-react';
 import LivePreview from '@/components/LivePreview';
@@ -12,7 +12,7 @@ import { useToast } from '@/components/Toast';
 import Link from 'next/link';
 
 function SharedGroupContent() {
-  const { id } = useParams<{ id: string }>();
+  const { username, collectionSlug } = useParams<{ username: string; collectionSlug: string }>();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get('invite');
   const { user, firebaseUser } = useAuthStore();
@@ -47,34 +47,61 @@ function SharedGroupContent() {
     }
   }, [inviteToken, firebaseUser, user?.email]);
 
-  // Subscribe to Group changes
+  // Find Group ID and Subscribe
   useEffect(() => {
-    if (!id) return;
-    const unsubscribe = subscribeToGroup(id as string, firebaseUser?.uid || null, async (g) => {
-      setGroup(g);
-      if (g) {
-        // Fetch snippets
-        const loadedSnippets = await Promise.all(
-          g.snippetIds.map(sid => getSnippet(sid))
-        );
-        let validSnippets = loadedSnippets.filter(Boolean) as FirestoreSnippet[];
-        
-        // Filter out private snippets if not a collaborator or owner
-        const isOwner = firebaseUser?.uid === g.ownerId;
-        const isCollaborator = !!firebaseUser && (g.collaborators || []).includes(firebaseUser.uid);
-        if (!isOwner && !isCollaborator) {
-          validSnippets = validSnippets.filter(s => s.visibility === 'public' || s.visibility === 'unlisted');
-        }
+    if (!username || !collectionSlug) return;
+    let unsubscribe: () => void = () => {};
+    let isCancelled = false;
 
-        setSnippets(validSnippets);
-        if (validSnippets.length > 0 && (!activeSnippetId || !validSnippets.find(s => s.id === activeSnippetId))) {
-          setActiveSnippetId(validSnippets[0].id);
+    const initGroup = async () => {
+      let groupId = collectionSlug; // default fallback
+
+      try {
+        const u = await getUserByUsernameOrId(username);
+        if (u) {
+          // try to find group by slug
+          const groupsRef = collection(db, 'groups');
+          const q = query(groupsRef, where('ownerId', '==', u.id), where('slug', '==', collectionSlug));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            groupId = snap.docs[0].id;
+          }
         }
+      } catch (e) {
+        console.error(e);
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [id, activeSnippetId, firebaseUser?.uid]);
+
+      if (isCancelled) return;
+
+      unsubscribe = subscribeToGroup(groupId, firebaseUser?.uid || null, async (g) => {
+        setGroup(g);
+        if (g) {
+          const loadedSnippets = await Promise.all(
+            g.snippetIds.map(sid => getSnippet(sid))
+          );
+          let validSnippets = loadedSnippets.filter(Boolean) as FirestoreSnippet[];
+          
+          const isOwner = firebaseUser?.uid === g.ownerId;
+          const isCollaborator = !!firebaseUser && (g.collaborators || []).includes(firebaseUser.uid);
+          if (!isOwner && !isCollaborator) {
+            validSnippets = validSnippets.filter(s => s.visibility === 'public' || s.visibility === 'unlisted');
+          }
+
+          setSnippets(validSnippets);
+          if (validSnippets.length > 0 && (!activeSnippetId || !validSnippets.find(s => s.id === activeSnippetId))) {
+            setActiveSnippetId(validSnippets[0].id);
+          }
+        }
+        setLoading(false);
+      });
+    };
+    initGroup();
+
+    return () => {
+      isCancelled = true;
+      unsubscribe();
+    };
+  }, [username, collectionSlug, activeSnippetId, firebaseUser?.uid]);
 
   // Sync editor with active snippet
   useEffect(() => {

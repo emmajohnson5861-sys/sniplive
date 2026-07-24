@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { subscribeToSnippet, FirestoreSnippet, updateSnippet, redeemInvite, incrementSnippetView, createSnippet } from '@/lib/firebase-db';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { subscribeToSnippet, FirestoreSnippet, updateSnippet, redeemInvite, incrementSnippetView, createSnippet, getUserByUsernameOrId, getDocs, query, collection, where, db } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import { Globe, User, Lock, Code2, Edit3, Save, Check, GitFork, Home } from 'lucide-react';
 import LivePreview from '@/components/LivePreview';
@@ -11,8 +11,7 @@ import AuthModal from '@/components/AuthModal';
 import { useToast } from '@/components/Toast';
 import Link from 'next/link';
 
-function SharedSnippetContent() {
-  const { id } = useParams<{ id: string }>();
+function SharedSnippetContent({ username, snippetSlug }: { username: string; snippetSlug?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const inviteToken = searchParams.get('invite');
@@ -47,37 +46,64 @@ function SharedSnippetContent() {
   }, [inviteToken, firebaseUser, user?.email]);
 
   useEffect(() => {
-    if (!id) return;
-    let isFirstLoad = true;
-    
-    // Check local storage for view count debounce
-    const viewedKey = `viewed_${id}`;
-    if (!localStorage.getItem(viewedKey)) {
-      incrementSnippetView(id as string).catch(() => {});
-      localStorage.setItem(viewedKey, 'true');
-    }
+    if (!username || !snippetSlug) return;
+    let unsubscribe: () => void = () => {};
+    let isCancelled = false;
 
-    const unsubscribe = subscribeToSnippet(id as string, firebaseUser?.uid || null, (s) => {
-      if (s) {
-        setSnippet(s);
-        if (isFirstLoad) {
-          setHtml(s.html);
-          setCss(s.css);
-          setJs(s.js);
-          currentCloud.current = { html: s.html, css: s.css, js: s.js };
-          isFirstLoad = false;
-        } else {
-          const oldCloud = { ...currentCloud.current };
-          setHtml(prev => prev === oldCloud.html ? s.html : prev);
-          setCss(prev => prev === oldCloud.css ? s.css : prev);
-          setJs(prev => prev === oldCloud.js ? s.js : prev);
-          currentCloud.current = { html: s.html, css: s.css, js: s.js };
+    const initSnippet = async () => {
+      let snippetId = snippetSlug; // fallback to treating slug as ID
+
+      try {
+        const u = await getUserByUsernameOrId(username);
+        if (u) {
+          const snippetsRef = collection(db, 'snippets');
+          const q = query(snippetsRef, where('ownerId', '==', u.id), where('slug', '==', snippetSlug));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            snippetId = snap.docs[0].id;
+          }
         }
+      } catch(e) {
+        console.error(e);
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [id, firebaseUser?.uid]);
+
+      if (isCancelled) return;
+      
+      const viewedKey = `viewed_${snippetId}`;
+      if (!localStorage.getItem(viewedKey)) {
+        incrementSnippetView(snippetId).catch(() => {});
+        localStorage.setItem(viewedKey, 'true');
+      }
+
+      let isFirstLoad = true;
+      unsubscribe = subscribeToSnippet(snippetId, firebaseUser?.uid || null, (s) => {
+        if (s) {
+          setSnippet(s);
+          if (isFirstLoad) {
+            setHtml(s.html);
+            setCss(s.css);
+            setJs(s.js);
+            currentCloud.current = { html: s.html, css: s.css, js: s.js };
+            isFirstLoad = false;
+          } else {
+            const oldCloud = { ...currentCloud.current };
+            setHtml(prev => prev === oldCloud.html ? s.html : prev);
+            setCss(prev => prev === oldCloud.css ? s.css : prev);
+            setJs(prev => prev === oldCloud.js ? s.js : prev);
+            currentCloud.current = { html: s.html, css: s.css, js: s.js };
+          }
+        }
+        setLoading(false);
+      });
+    };
+
+    initSnippet();
+
+    return () => {
+      isCancelled = true;
+      unsubscribe();
+    };
+  }, [username, snippetSlug, firebaseUser?.uid]);
 
 
 
@@ -231,10 +257,10 @@ function SharedSnippetContent() {
   );
 }
 
-export default function SharedSnippetPage() {
+export default function PublicSnippet({ username, snippetSlug }: { username: string; snippetSlug?: string }) {
   return (
     <Suspense fallback={<div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'var(--bg-primary)'}}><p style={{color:'var(--text-secondary)'}}>Loading...</p></div>}>
-      <SharedSnippetContent />
+      <SharedSnippetContent username={username} snippetSlug={snippetSlug} />
     </Suspense>
   );
 }

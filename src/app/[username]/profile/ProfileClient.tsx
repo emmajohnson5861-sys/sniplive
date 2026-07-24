@@ -10,7 +10,7 @@ import SnippetPreviewCard from '@/components/SnippetPreviewCard';
 import styles from './ProfileClient.module.css';
 
 export default function UserProfilePage() {
-  const { id } = useParams<{ id: string }>();
+  const { username } = useParams<{ username: string }>();
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const { firebaseUser, initialized } = useAuthStore();
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
@@ -24,11 +24,11 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     // Wait until auth is initialized before deciding which snippets to fetch
-    if (!id || !initialized) return;
+    if (!username || !initialized) return;
     const fetchData = async () => {
       setLoading(true);
       try {
-        const u = await getUserByUsernameOrId(id as string);
+        const u = await getUserByUsernameOrId(username as string);
         setUserProfile(u);
         if (u) {
           const isOwner = firebaseUser?.uid === u.id;
@@ -48,7 +48,7 @@ export default function UserProfilePage() {
       setLoading(false);
     };
     fetchData();
-  }, [id, firebaseUser, initialized]);
+  }, [username, firebaseUser, initialized]);
 
   const handleRequestUnban = async () => {
     if (!firebaseUser || !userProfile) return;
@@ -110,7 +110,7 @@ export default function UserProfilePage() {
           <div className={styles.info}>
             <h1 className={styles.title}>{userProfile.name || 'Anonymous User'}</h1>
             <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <Globe size={16} /> {firebaseUser?.uid === id ? 'Your Profile' : 'Public Profile'}
+              <Globe size={16} /> {firebaseUser?.uid === userProfile.id ? 'Your Profile' : 'Public Profile'}
             </div>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function UserProfilePage() {
                 </h2>
                 <div className={styles.grid}>
                   {groups.map(g => (
-                    <Link key={g.id} href={`/g/${g.id}`} style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.2s', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
+                    <Link key={g.id} href={`/${userProfile.username}/c/${g.slug || g.id}`} style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.2s', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
                       <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{g.title}</div>
                       {g.description && <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{g.description}</div>}
                       <div style={{ marginTop: 'auto', paddingTop: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -167,14 +167,14 @@ export default function UserProfilePage() {
             <div>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Code2 size={20} color="var(--accent-primary)" />
-                {firebaseUser?.uid === id ? 'All Snippets' : 'Public Snippets'}
+                {firebaseUser?.uid === userProfile.id ? 'All Snippets' : 'Public Snippets'}
               </h2>
               {snippets.length === 0 ? (
                 <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No snippets available.</div>
               ) : (
                 <div className={styles.grid}>
                   {snippets.map(s => (
-                    <SnippetPreviewCard key={s.id} snippet={s} isOwner={firebaseUser?.uid === id} />
+                    <SnippetPreviewCard key={s.id} snippet={s} isOwner={firebaseUser?.uid === userProfile.id} />
                   ))}
                 </div>
               )}

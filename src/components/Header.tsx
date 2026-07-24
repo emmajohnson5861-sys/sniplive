@@ -39,11 +39,11 @@ export default function Header() {
   }, [activeSnippet?.id]);
 
   useEffect(() => {
-    if (isShareModalOpen && activeSnippet) {
-      setShareLink(`${window.location.origin}/s/${activeSnippet.id}`);
+    if (isShareModalOpen && activeSnippet && currentUser) {
+      setShareLink(`${window.location.origin}/${currentUser.username}/${activeSnippet.slug || activeSnippet.id}`);
       loadShareData();
     }
-  }, [isShareModalOpen, activeSnippet]);
+  }, [isShareModalOpen, activeSnippet, currentUser]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -143,7 +143,7 @@ export default function Header() {
     if (!activeSnippet || !currentUser) return;
     try {
       const inviteId = await createInvite(inviteEmail, 'snippet', activeSnippet.id, currentUser.id);
-      const link = `${window.location.origin}/s/${activeSnippet.id}?invite=${inviteId}`;
+      const link = `${window.location.origin}/${currentUser.username}/${activeSnippet.slug || activeSnippet.id}?invite=${inviteId}`;
       navigator.clipboard.writeText(link);
       setInviteMessage(`Invite created & link copied! Send it to ${inviteEmail}`);
       setInviteEmail('');

@@ -24,8 +24,8 @@ export default function GroupShareModal({ isOpen, onClose, group }: GroupShareMo
   const [inviteMessage, setInviteMessage] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      setShareLink(`${window.location.origin}/g/${group.id}`);
+    if (isOpen && currentUser) {
+      setShareLink(`${window.location.origin}/${currentUser.username}/c/${group.slug || group.id}`);
       setIsPublic(group.isPublic || false);
       loadCollaborators();
     }
@@ -52,7 +52,7 @@ export default function GroupShareModal({ isOpen, onClose, group }: GroupShareMo
     if (!currentUser) return;
     try {
       const inviteId = await createInvite(inviteEmail, 'group', group.id, currentUser.id);
-      const link = `${window.location.origin}/g/${group.id}?invite=${inviteId}`;
+      const link = `${window.location.origin}/${currentUser.username}/c/${group.slug || group.id}?invite=${inviteId}`;
       navigator.clipboard.writeText(link);
       setInviteMessage(`Invite created & link copied! Send it to ${inviteEmail}`);
       setInviteEmail('');

@@ -6,6 +6,7 @@ import { FirestoreSnippet, FirestoreGroup, subscribeToUserSnippets, subscribeToU
 
 export interface Snippet {
   id: string;
+  slug?: string;
   title: string;
   html: string;
   css: string;
@@ -22,6 +23,7 @@ export interface Snippet {
 
 export interface Group {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   snippetIds: string[];
@@ -36,6 +38,7 @@ interface SnippetContextType {
   activeSnippetId: string | null;
   activeSnippet: Snippet | null;
   activeGroupId: string | null;
+  loadedFromCloud: boolean;
   setActiveSnippetId: (id: string | null) => void;
   setActiveGroupId: (id: string | null) => void;
   saveSnippet: (snippet: Snippet) => void;
@@ -64,7 +67,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       let isFirstLoad = true;
       const unsubscribeSnippets = subscribeToUserSnippets(firebaseUser.uid, (cloudSnippets) => {
         const mapped = cloudSnippets.map(s => ({
-          id: s.id, title: s.title, html: s.html, css: s.css, js: s.js,
+          id: s.id, slug: s.slug, title: s.title, html: s.html, css: s.css, js: s.js,
           createdAt: s.createdAt?.toDate()?.getTime() || Date.now(),
           updatedAt: s.updatedAt?.toDate()?.getTime() || Date.now(),
           visibility: s.visibility, allowForking: s.allowForking, forkedFromId: s.forkedFromId,
@@ -81,7 +84,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
 
       const unsubscribeGroups = subscribeToUserGroups(firebaseUser.uid, (cloudGroups) => {
         const mappedGroups = cloudGroups.map(g => ({
-          id: g.id, title: g.title, description: g.description, snippetIds: g.snippetIds || [],
+          id: g.id, slug: g.slug, title: g.title, description: g.description, snippetIds: g.snippetIds || [],
           isPublic: g.isPublic, ownerId: g.ownerId, collaborators: g.collaborators
         }));
         setGroups(mappedGroups);
@@ -100,6 +103,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       } else {
         const defaultSnippet: Snippet = {
           id: Math.random().toString(36).substring(2, 9),
+          slug: 'my-first-snippet',
           title: 'My First Snippet',
           html: '<div class="card">\n  <h2>Hello SnipLive!</h2>\n  <p>Edit this code to see the live preview.</p>\n  <button class="btn">Click Me</button>\n</div>',
           css: '.card {\n  padding: 2rem;\n  border-radius: 12px;\n  background: white;\n  box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n  font-family: sans-serif;\n  text-align: center;\n}\n\n.btn {\n  margin-top: 1rem;\n  padding: 0.5rem 1rem;\n  background: #6366f1;\n  color: white;\n  border: none;\n  border-radius: 6px;\n  cursor: pointer;\n}',
@@ -161,6 +165,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     const ownerId = firebaseUser?.uid || '';
     const newSnippet: Snippet = {
       id: Math.random().toString(36).substring(2, 9),
+      slug: 'untitled-snippet-' + Math.random().toString(36).substring(2, 6),
       title: 'Untitled Snippet',
       html: '<!-- Write your HTML here -->\n',
       css: '/* Write your CSS here */\n',
@@ -267,7 +272,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <SnippetContext.Provider value={{
-      snippets, groups, activeSnippetId, activeSnippet, activeGroupId,
+      snippets, groups, activeSnippetId, activeSnippet, activeGroupId, loadedFromCloud,
       setActiveSnippetId, setActiveGroupId, saveSnippet, createNewSnippet,
       deleteSnippet, updateSnippetTitle, createNewGroup, deleteGroup: deleteGroupContext,
       addSnippetToGroup, removeSnippetFromGroup, forkSnippet

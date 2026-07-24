@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import ProfileClient from './ProfileClient';
 
 type Props = {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ username: string }> | { username: string }
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
-  const { id } = resolvedParams;
+  const { username } = resolvedParams;
   try {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     
-    // First try by ID
-    let res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${id}`, { next: { revalidate: 60 } });
+    // First try by ID (fallback for old URLs)
+    let res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${username}`, { next: { revalidate: 60 } });
     let userDoc: any = null;
 
     if (res.ok) {
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
               fieldFilter: {
                 field: { fieldPath: 'username' },
                 op: 'EQUAL',
-                value: { stringValue: id }
+                value: { stringValue: username }
               }
             },
             limit: 1

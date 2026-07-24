@@ -1,9 +1,9 @@
 import Sidebar from '@/components/Sidebar';
-import styles from '../layout.module.css';
+import styles from './layout.module.css';
 import { SnippetProvider } from '@/context/SnippetContext';
 import { SidebarProvider } from '@/context/SidebarContext';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function SandboxLayout({ children }: { children: React.ReactNode }) {
   return (
     <SnippetProvider>
       <SidebarProvider>

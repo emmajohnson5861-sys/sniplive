@@ -21,6 +21,7 @@ export interface FirestoreUser {
 
 export interface FirestoreSnippet {
   id: string;
+  slug?: string;
   title: string;
   html: string;
   css: string;
@@ -138,13 +139,31 @@ export async function deleteUser(uid: string) {
 
 // ─── Snippets ───────────────────────────────────────
 
+export async function generateUniqueSnippetSlug(userId: string, title: string): Promise<string> {
+  const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'snippet';
+  let slug = baseSlug;
+  const snippetsRef = collection(db, 'snippets');
+  let q = query(snippetsRef, where('ownerId', '==', userId), where('slug', '==', slug));
+  let snap = await getDocs(q);
+  if (snap.empty) return slug;
+
+  while (true) {
+    const suffix = Math.floor(Math.random() * 10000).toString();
+    const trySlug = `${baseSlug}-${suffix}`;
+    const q2 = query(snippetsRef, where('ownerId', '==', userId), where('slug', '==', trySlug));
+    const snap2 = await getDocs(q2);
+    if (snap2.empty) return trySlug;
+  }
+}
+
 export async function createSnippet(data: {
   id: string; title: string; html: string; css: string; js: string;
   ownerId: string; ownerName: string | null; ownerEmail: string;
   forkedFromId?: string | null;
 }) {
+  const slug = await generateUniqueSnippetSlug(data.ownerId, data.title);
   await setDoc(doc(db, 'snippets', data.id), {
-    title: data.title, html: data.html, css: data.css, js: data.js,
+    title: data.title, slug, html: data.html, css: data.css, js: data.js,
     visibility: 'private', allowForking: true, forkedFromId: data.forkedFromId || null,
     viewCount: 0, likeCount: 0,
     ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
@@ -305,6 +324,7 @@ export async function removeCollaborator(snippetId: string, userId: string) {
 
 export interface FirestoreGroup {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   isPublic: boolean;
@@ -317,11 +337,29 @@ export interface FirestoreGroup {
   updatedAt: Timestamp | null;
 }
 
+export async function generateUniqueGroupSlug(userId: string, title: string): Promise<string> {
+  const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'collection';
+  let slug = baseSlug;
+  const groupsRef = collection(db, 'groups');
+  let q = query(groupsRef, where('ownerId', '==', userId), where('slug', '==', slug));
+  let snap = await getDocs(q);
+  if (snap.empty) return slug;
+
+  while (true) {
+    const suffix = Math.floor(Math.random() * 10000).toString();
+    const trySlug = `${baseSlug}-${suffix}`;
+    const q2 = query(groupsRef, where('ownerId', '==', userId), where('slug', '==', trySlug));
+    const snap2 = await getDocs(q2);
+    if (snap2.empty) return trySlug;
+  }
+}
+
 export async function createGroup(data: {
   id: string; title: string; description: string; ownerId: string; ownerName: string | null; snippetIds?: string[];
 }) {
+  const slug = await generateUniqueGroupSlug(data.ownerId, data.title);
   await setDoc(doc(db, 'groups', data.id), {
-    title: data.title, description: data.description,
+    title: data.title, slug, description: data.description,
     isPublic: false, ownerId: data.ownerId, ownerName: data.ownerName,
     snippetIds: data.snippetIds || [],
     collaborators: [data.ownerId], pendingRequests: [],
@@ -559,3 +597,4 @@ export async function redeemInvite(inviteId: string, currentUserEmail: string, c
 export async function toggleGroupVisibility(groupId: string, isPublic: boolean) {
   await setDoc(doc(db, 'groups', groupId), { isPublic, updatedAt: serverTimestamp() } as any, { merge: true });
 }
+export { db, getDocs, query, collection, where };
