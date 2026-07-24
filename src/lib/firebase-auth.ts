@@ -1,5 +1,5 @@
 import { auth, db } from './firebase';
-import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from '@firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, fetchSignInMethodsForEmail, updateProfile } from '@firebase/auth';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, serverTimestamp } from '@firebase/firestore';
 
 const provider = new GoogleAuthProvider();
@@ -22,6 +22,25 @@ export async function signInWithGoogle(): Promise<User | null> {
 
 export async function signOutUser(): Promise<void> {
   await signOut(auth);
+}
+
+export async function checkEmailSignInMethods(email: string): Promise<string[]> {
+  return await fetchSignInMethodsForEmail(auth, email);
+}
+
+export async function signUpWithEmail(email: string, password: string, name: string): Promise<User> {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  const user = result.user;
+  await updateProfile(user, { displayName: name });
+  await ensureUserDoc(user);
+  return user;
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<User> {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  const user = result.user;
+  await ensureUserDoc(user);
+  return user;
 }
 
 async function generateUniqueUsername(base: string): Promise<string> {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@firebase/auth';
-import { onAuthChange, signInWithGoogle, signOutUser, ensureUserDoc } from '@/lib/firebase-auth';
+import { onAuthChange, signInWithGoogle, signOutUser, ensureUserDoc, checkEmailSignInMethods, signUpWithEmail as fbSignUpWithEmail, signInWithEmail as fbSignInWithEmail } from '@/lib/firebase-auth';
 import { getUser, FirestoreUser } from '@/lib/firebase-db';
 
 interface AuthState {
@@ -9,6 +9,8 @@ interface AuthState {
   loading: boolean;
   initialized: boolean;
   signIn: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
+  signUpWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -27,6 +29,38 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch (err) {
       set({ loading: false });
+      throw err;
+    }
+  },
+
+  signInWithEmail: async (email, pass) => {
+    try {
+      const fbUser = await fbSignInWithEmail(email, pass);
+      if (fbUser) {
+        const userData = await getUser(fbUser.uid);
+        set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+      }
+    } catch (err) {
+      set({ loading: false });
+      throw err;
+    }
+  },
+
+  signUpWithEmail: async (email, pass, name) => {
+    try {
+      const methods = await checkEmailSignInMethods(email);
+      if (methods.includes('google.com')) {
+        throw new Error('there already account created on this mail continue with google');
+      }
+      
+      const fbUser = await fbSignUpWithEmail(email, pass, name);
+      if (fbUser) {
+        const userData = await getUser(fbUser.uid);
+        set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
+      }
+    } catch (err) {
+      set({ loading: false });
+      throw err;
     }
   },
 
