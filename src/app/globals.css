@@ -45,6 +45,7 @@
   --margin-mobile: 16px;
   --margin-desktop: 32px;
   --sidebar-width: 260px;
+  --container-max: 1280px;
 
   /* Border Radius */
   --radius-sm: 0.125rem;

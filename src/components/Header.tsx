@@ -23,11 +23,6 @@ export default function Header() {
         </div>
       </div>
       
-      <nav className={styles.navLinks}>
-        <a href="#" className={`${styles.navLink} ${styles.active}`}>Explore</a>
-        <a href="#" className={styles.navLink}>Community</a>
-      </nav>
-      
       <div className={styles.rightSection}>
         <button className={styles.iconBtn} onClick={toggleSidebar}>
           <span className="material-symbols-outlined">dark_mode</span>
