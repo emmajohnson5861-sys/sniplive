@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
 import PublicSnippet from '@/components/PublicSnippet';
+import BannedUserView from '@/components/BannedUserView';
 import styles from './page.module.css';
 import SplitPane from '@/components/SplitPane';
 import Header from '@/components/Header';
@@ -52,6 +53,10 @@ export default function IDEPage() {
 
   // Wait for auth to initialize before making routing decisions
   if (!initialized) return null;
+
+  if (user?.isBanned) {
+    return <BannedUserView />;
+  }
 
   if (user && user.username !== targetUsername) {
     return <PublicSnippet username={targetUsername} snippetSlug={targetSlug} />;

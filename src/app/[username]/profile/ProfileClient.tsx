@@ -7,6 +7,7 @@ import { User, Code2, Folder, Globe, Home, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import SnippetPreviewCard from '@/components/SnippetPreviewCard';
+import BannedUserView from '@/components/BannedUserView';
 import styles from './ProfileClient.module.css';
 
 export default function UserProfilePage() {
@@ -117,24 +118,13 @@ export default function UserProfilePage() {
 
         {/* Banned Message */}
         {userProfile.isBanned && (
-          <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--error)', textAlign: 'center' }}>
-            <AlertTriangle size={48} color="var(--error)" style={{ margin: '0 auto 1rem' }} />
-            <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>This account has been banned.</h2>
-            {firebaseUser?.uid === userProfile.id && (
-              <div>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>If you believe this is an error, you can request a review.</p>
-                <button 
-                  onClick={handleRequestUnban} 
-                  disabled={unbanRequested}
-                  style={{
-                    background: unbanRequested ? 'var(--bg-tertiary)' : 'var(--accent-primary)',
-                    color: unbanRequested ? 'var(--text-secondary)' : '#fff',
-                    border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)',
-                    fontWeight: 600, cursor: unbanRequested ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {unbanRequested ? 'Request Sent' : 'Request Unban'}
-                </button>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            {firebaseUser?.uid === userProfile.id ? (
+               <BannedUserView inline={true} />
+            ) : (
+              <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--error)', textAlign: 'center', width: '100%' }}>
+                <AlertTriangle size={48} color="var(--error)" style={{ margin: '0 auto 1rem' }} />
+                <h2 style={{ color: 'var(--error)' }}>This account has been suspended.</h2>
               </div>
             )}
           </div>
