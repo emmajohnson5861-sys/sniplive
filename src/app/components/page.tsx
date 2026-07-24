@@ -68,6 +68,7 @@ export default function ComponentsPage() {
   };
 
   const getLangLabel = (s: FirestoreSnippet) => {
+    if (s.liveCategory) return s.liveCategory;
     const parts: string[] = [];
     if (s.html?.trim()) parts.push('HTML');
     if (s.css?.trim()) parts.push('CSS');
@@ -202,7 +203,7 @@ export default function ComponentsPage() {
                       <div className={styles.cardHeader}>
                         <div className={styles.cardHeaderLeft}>
                           <span className={styles.cardLang}>{getLangLabel(s)}</span>
-                          <h2 className={styles.cardTitle}>{s.title}</h2>
+                          <h2 className={styles.cardTitle}>{s.liveTitle || s.title}</h2>
                         </div>
                         <div className={styles.cardActions}>
                           <button
@@ -232,6 +233,14 @@ export default function ComponentsPage() {
                         <pre>{getCodePreview(s)}</pre>
                         <div className={styles.codeWellFade}></div>
                       </div>
+
+                      {s.liveTags && s.liveTags.length > 0 && (
+                        <div className={styles.tagRow}>
+                          {s.liveTags.map(tag => (
+                            <span key={tag} className={styles.tag}>{tag}</span>
+                          ))}
+                        </div>
+                      )}
 
                       <div className={styles.cardFooter}>
                         <div className={styles.authorRow}>

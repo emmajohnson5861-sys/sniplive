@@ -28,6 +28,9 @@ export interface FirestoreSnippet {
   js: string;
   visibility: 'private' | 'unlisted' | 'public';
   isLive: boolean;
+  liveTitle?: string | null;
+  liveCategory?: string | null;
+  liveTags?: string[];
   allowForking: boolean;
   forkedFromId: string | null;
   viewCount: number;

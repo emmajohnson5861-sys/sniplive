@@ -7,6 +7,7 @@ import LivePreview from './LivePreview';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
 import { updateSnippet } from '@/lib/firebase-db';
+import GoLiveModal, { GoLiveData } from './GoLiveModal';
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), { ssr: false });
 
@@ -26,6 +27,7 @@ export default function SplitPane() {
   const [isLive, setIsLive] = useState(activeSnippet?.isLive || false);
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveToast, setLiveToast] = useState<string | null>(null);
+  const [isGoLiveModalOpen, setIsGoLiveModalOpen] = useState(false);
   
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -168,12 +170,38 @@ export default function SplitPane() {
 
   const handleToggleLive = async () => {
     if (!activeSnippet || !isOwner) return;
+    if (!isLive) {
+      // Go Live: open modal to collect metadata first
+      setIsGoLiveModalOpen(true);
+    } else {
+      // Un-live: immediately remove
+      setLiveLoading(true);
+      try {
+        await updateSnippet(activeSnippet.id, { isLive: false } as any);
+        setIsLive(false);
+        setLiveToast('Snippet removed from SnipLive Components');
+        setTimeout(() => setLiveToast(null), 3000);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLiveLoading(false);
+      }
+    }
+  };
+
+  const handlePublishLive = async (data: GoLiveData) => {
+    if (!activeSnippet) return;
     setLiveLoading(true);
-    const newVal = !isLive;
     try {
-      await updateSnippet(activeSnippet.id, { isLive: newVal } as any);
-      setIsLive(newVal);
-      setLiveToast(newVal ? '✅ Snippet is now live on SnipLive Components!' : '⬜ Snippet removed from SnipLive Components');
+      await updateSnippet(activeSnippet.id, {
+        isLive: true,
+        liveTitle: data.liveTitle,
+        liveCategory: data.liveCategory || null,
+        liveTags: data.liveTags,
+      } as any);
+      setIsLive(true);
+      setIsGoLiveModalOpen(false);
+      setLiveToast('✅ Your snippet is now live on Components!');
       setTimeout(() => setLiveToast(null), 3000);
     } catch (e) {
       console.error(e);
@@ -193,6 +221,7 @@ export default function SplitPane() {
   const isOwner = user?.id === activeSnippet.ownerId;
 
   return (
+    <>
     <div className={styles.mainWrapper}>
       {/* Editor Header */}
       <div className={styles.editorHeader}>
@@ -308,5 +337,13 @@ export default function SplitPane() {
         )}
       </div>
     </div>
+    <GoLiveModal
+      isOpen={isGoLiveModalOpen}
+      snippetTitle={title}
+      onClose={() => setIsGoLiveModalOpen(false)}
+      onPublish={handlePublishLive}
+      loading={liveLoading}
+    />
+    </>
   );
 }
