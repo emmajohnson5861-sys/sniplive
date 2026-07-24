@@ -110,17 +110,37 @@ export default function ComponentsPage() {
               />
             </div>
             {user ? (
-              <div
-                className={styles.avatar}
-                onClick={() => router.push(`/${user.username}`)}
-                style={{ cursor: 'pointer' }}
-              >
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span>{(user.name || user.username || 'U')[0].toUpperCase()}</span>
-                )}
-              </div>
+              <>
+                <button
+                  onClick={() => router.push(`/${user.username}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '0.4rem 0.875rem',
+                    background: 'transparent',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-DEFAULT)',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px', fontWeight: 600,
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-subtle)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>code</span>
+                  My Snippets
+                </button>
+                <div
+                  className={styles.avatar}
+                  onClick={() => router.push(`/${user.username}/profile`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span>{(user.name || user.username || 'U')[0].toUpperCase()}</span>
+                  )}
+                </div>
+              </>
             ) : (
               <Link href="/" className="btn-primary" style={{ fontSize: '13px' }}>Sign In</Link>
             )}

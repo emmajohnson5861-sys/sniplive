@@ -168,6 +168,27 @@ export default function SplitPane() {
     }
   };
 
+  const handleVisibilityChange = async (newVis: 'private' | 'unlisted' | 'public') => {
+    if (!activeSnippet || !isOwner) return;
+    setVisibility(newVis);
+    try {
+      await updateSnippet(activeSnippet.id, { visibility: newVis } as any);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleShare = () => {
+    if (!activeSnippet) return;
+    const ownerUsername = user?.username || activeSnippet.ownerId;
+    const snippetSlug = activeSnippet.slug || activeSnippet.id;
+    const url = `${window.location.origin}/${ownerUsername}/${snippetSlug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setLiveToast('🔗 Link copied to clipboard!');
+      setTimeout(() => setLiveToast(null), 2500);
+    });
+  };
+
   const handleToggleLive = async () => {
     if (!activeSnippet || !isOwner) return;
     if (!isLive) {
@@ -236,13 +257,39 @@ export default function SplitPane() {
             />
             {isOwner && <span className={`material-symbols-outlined ${styles.editIcon}`}>edit</span>}
           </div>
-          <div className={styles.visibilityBadge}>
-            <div className={`${styles.visibilityDot} ${styles[visibility]}`}></div>
-            <span>{visibility}</span>
-          </div>
+          {/* Visibility selector */}
+          {isOwner ? (
+            <div className={styles.visibilitySelect}>
+              <div className={`${styles.visibilityDot} ${styles[visibility]}`}></div>
+              <select
+                className={styles.visibilityDropdown}
+                value={visibility}
+                onChange={(e) => handleVisibilityChange(e.target.value as 'private' | 'unlisted' | 'public')}
+              >
+                <option value="private">Private</option>
+                <option value="unlisted">Unlisted</option>
+                <option value="public">Public</option>
+              </select>
+            </div>
+          ) : (
+            <div className={styles.visibilityBadge}>
+              <div className={`${styles.visibilityDot} ${styles[visibility]}`}></div>
+              <span>{visibility}</span>
+            </div>
+          )}
         </div>
         <div className={styles.editorHeaderRight}>
           {!isSaved && <p className={styles.saveStatus}>Unsaved changes</p>}
+          {/* Share button — visible to owner and for public/unlisted snippets */}
+          {(isOwner || visibility !== 'private') && (
+            <button
+              onClick={handleShare}
+              title="Copy share link"
+              className={styles.headerIconBtn}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>share</span>
+            </button>
+          )}
           {isOwner && (
             <button
               onClick={handleToggleLive}

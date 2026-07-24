@@ -51,12 +51,39 @@ export default function LandingPage() {
             </div>
           </div>
           <div className={styles.navActions}>
-            <button className={styles.loginBtn} onClick={() => openAuth('signin')}>
-              Log In
-            </button>
-            <button className={styles.signupBtn} onClick={() => openAuth('signup')}>
-              Sign Up
-            </button>
+            {initialized && firebaseUser && user ? (
+              /* Logged-in state */
+              <>
+                <button
+                  className={styles.goToSnippetsBtn}
+                  onClick={() => router.push(`/${user.username}`)}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>code</span>
+                  My Snippets
+                </button>
+                <div
+                  className={styles.navAvatar}
+                  onClick={() => router.push(`/${user.username}/profile`)}
+                  title={user.name || user.username || ''}
+                >
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  ) : (
+                    <span>{(user.name || user.username || 'U')[0].toUpperCase()}</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Logged-out state */
+              <>
+                <button className={styles.loginBtn} onClick={() => openAuth('signin')}>
+                  Log In
+                </button>
+                <button className={styles.signupBtn} onClick={() => openAuth('signup')}>
+                  Sign Up
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>

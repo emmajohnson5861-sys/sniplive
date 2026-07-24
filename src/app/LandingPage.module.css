@@ -76,6 +76,51 @@
   gap: 1rem;
 }
 
+/* Logged-in nav controls */
+.goToSnippetsBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-DEFAULT);
+  color: var(--text-primary);
+  font-family: var(--font-button-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.goToSnippetsBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(126, 214, 205, 0.08);
+}
+
+.navAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  background: var(--surface-container-highest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.navAvatar:hover {
+  border-color: var(--primary);
+}
+
 .loginBtn {
   color: var(--text-secondary);
   font-family: var(--font-button-text);
