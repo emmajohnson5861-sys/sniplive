@@ -3,13 +3,13 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: var(--bg-primary);
+  background: var(--surface-container-lowest);
 }
 
 .tabs {
   display: flex;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--border-subtle);
   height: 40px;
 }
 
@@ -19,18 +19,23 @@
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s;
-  border-right: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-subtle);
   position: relative;
+  background: transparent;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  cursor: pointer;
 }
 
 .tab:hover {
   color: var(--text-primary);
-  background: var(--bg-tertiary);
+  background: var(--surface-container);
 }
 
 .tab.active {
   color: var(--text-primary);
-  background: var(--bg-primary);
+  background: var(--surface-container-lowest);
 }
 
 .tab.active::after {
@@ -40,7 +45,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--accent-primary);
+  background: var(--primary);
 }
 
 .codeArea {
@@ -59,11 +64,11 @@
 
 .cmWrapper :global(.cm-editor) {
   height: 100%;
-  background: var(--bg-primary) !important;
+  background: var(--surface-container-lowest) !important;
 }
 
 .cmWrapper :global(.cm-gutters) {
-  background: var(--bg-secondary) !important;
-  border-right: 1px solid var(--border-color) !important;
+  background: var(--surface-container-low) !important;
+  border-right: 1px solid var(--border-subtle) !important;
   color: var(--text-secondary) !important;
 }

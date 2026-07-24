@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { Karla, JetBrains_Mono } from 'next/font/google';
+import { Geist, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/components/Toast';
 import BannedOverlay from '@/components/BannedOverlay';
 
-const karla = Karla({ subsets: ['latin'] });
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
@@ -15,7 +15,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${karla.className} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+      </head>
+      <body className={`${geist.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
         <ToastProvider>
           {children}
           <BannedOverlay />

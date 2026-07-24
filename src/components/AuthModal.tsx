@@ -55,20 +55,22 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin', tit
   };
 
   return (
-    <div className="fixed inset-0" style={{position: 'fixed', zIndex: 50, top:0, left:0, right:0, bottom:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.6)'}}>
-      <div style={{background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '90%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-        <div style={{display: 'flex', gap: '0', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)'}}>
+    <div className="fixed inset-0" style={{position: 'fixed', zIndex: 50, top:0, left:0, right:0, bottom:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)'}}>
+      <div style={{background: 'var(--surface-container-low)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '2.5rem', width: '90%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'}}>
+        <div style={{display: 'flex', gap: '0', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-subtle)'}}>
           <button onClick={() => { setAuthMode('signin'); setError(''); }} style={{
             flex: 1, padding: '0.75rem 0', fontSize: '0.95rem', fontWeight: authMode === 'signin' ? 700 : 500,
-            color: authMode === 'signin' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            borderBottom: authMode === 'signin' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+            color: authMode === 'signin' ? 'var(--primary)' : 'var(--text-secondary)',
+            borderBottom: authMode === 'signin' ? '2px solid var(--primary)' : '2px solid transparent',
             background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+            fontFamily: 'var(--font-geist)'
           }}>Sign In</button>
           <button onClick={() => { setAuthMode('signup'); setError(''); }} style={{
             flex: 1, padding: '0.75rem 0', fontSize: '0.95rem', fontWeight: authMode === 'signup' ? 700 : 500,
-            color: authMode === 'signup' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            borderBottom: authMode === 'signup' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+            color: authMode === 'signup' ? 'var(--primary)' : 'var(--text-secondary)',
+            borderBottom: authMode === 'signup' ? '2px solid var(--primary)' : '2px solid transparent',
             background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+            fontFamily: 'var(--font-geist)'
           }}>Sign Up</button>
         </div>
         <p style={{color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.9rem', marginBottom: '0.5rem'}}>
@@ -76,7 +78,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin', tit
         </p>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <div style={{ background: 'rgba(196, 90, 90, 0.1)', color: 'var(--error)', padding: '0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', textAlign: 'center', border: '1px solid rgba(196, 90, 90, 0.2)' }}>
             {error}
           </div>
         )}
@@ -88,7 +90,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin', tit
               placeholder="Full Name" 
               value={name} 
               onChange={e => setName(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--surface-container-highest)', color: 'var(--text-primary)' }}
             />
           )}
           <input 
@@ -96,27 +98,27 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin', tit
             placeholder="Email Address" 
             value={email} 
             onChange={e => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--surface-container-highest)', color: 'var(--text-primary)' }}
           />
           <input 
             type="password" 
             placeholder="Password" 
             value={password} 
             onChange={e => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--surface-container-highest)', color: 'var(--text-primary)' }}
           />
-          <button type="submit" className="btn-primary" disabled={loading} style={{width: '100%', padding: '0.75rem', justifyContent: 'center'}}>
+          <button type="submit" className="bg-primary text-on-primary rounded" disabled={loading} style={{width: '100%', padding: '0.75rem', fontWeight: 600, transition: 'all 0.2s', opacity: loading ? 0.7 : 1}}>
             {loading ? 'Please wait...' : (authMode === 'signin' ? 'Sign In' : 'Sign Up')}
           </button>
         </form>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }}></div>
           <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>OR</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }}></div>
         </div>
 
-        <button type="button" className="btn-secondary" style={{width: '100%', padding: '0.75rem', justifyContent: 'center', gap: '0.75rem', display: 'flex', alignItems: 'center'}} onClick={async () => { await signIn(); onClose(); }}>
+        <button type="button" style={{width: '100%', padding: '0.75rem', justifyContent: 'center', gap: '0.75rem', display: 'flex', alignItems: 'center', border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-primary)', borderRadius: 'var(--radius-md)', fontWeight: 500, transition: 'background 0.2s'}} onClick={async () => { await signIn(); onClose(); }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-container)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -125,7 +127,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin', tit
           </svg>
           Continue with Google
         </button>
-        <button type="button" className="btn-secondary" onClick={onClose} style={{marginTop: '0.5rem', width: '100%', border: 'none', background: 'transparent'}}>Cancel</button>
+        <button type="button" onClick={onClose} style={{marginTop: '0.2rem', width: '100%', border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', transition: 'color 0.2s'}} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}>Cancel</button>
       </div>
     </div>
   );

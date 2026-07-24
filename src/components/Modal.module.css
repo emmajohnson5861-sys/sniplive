@@ -12,8 +12,8 @@
 }
 
 .modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--surface-container);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   width: 90%;
   max-width: 450px;
@@ -24,7 +24,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .header h2 {

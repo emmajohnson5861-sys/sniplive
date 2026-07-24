@@ -8,7 +8,6 @@ import PublicSnippet from '@/components/PublicSnippet';
 import BannedUserView from '@/components/BannedUserView';
 import styles from './page.module.css';
 import SplitPane from '@/components/SplitPane';
-import Header from '@/components/Header';
 
 export default function IDEPage() {
   const params = useParams();
@@ -67,11 +66,8 @@ export default function IDEPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <Header />
-      <div className={styles.editorArea}>
-        <SplitPane />
-      </div>
+    <div className={styles.editorArea}>
+      <SplitPane />
     </div>
   );
 }

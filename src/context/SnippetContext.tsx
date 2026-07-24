@@ -42,7 +42,7 @@ interface SnippetContextType {
   setActiveSnippetId: (id: string | null) => void;
   setActiveGroupId: (id: string | null) => void;
   saveSnippet: (snippet: Snippet) => void;
-  createNewSnippet: () => void;
+  createNewSnippet: (title: string) => void;
   deleteSnippet: (id: string) => void;
   updateSnippetTitle: (id: string, newTitle: string) => void;
   createNewGroup: (title: string, description: string) => void;
@@ -160,10 +160,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     }
   }, [snippets, firebaseUser, user]);
 
-  const createNewSnippet = useCallback(async () => {
-    const title = window.prompt('Enter a name for your new snippet:', 'Untitled Snippet');
-    if (title === null) return; // User cancelled
-
+  const createNewSnippet = useCallback(async (title: string) => {
     const ownerId = firebaseUser?.uid || '';
     let newSlug = 'untitled-snippet-' + Math.random().toString(36).substring(2, 6);
     if (ownerId) {

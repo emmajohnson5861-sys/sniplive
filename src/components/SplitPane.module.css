@@ -1,9 +1,112 @@
+.mainWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editorHeader {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-container-lowest);
+  flex-shrink: 0;
+}
+
+.editorHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.titleInput {
+  font-family: var(--font-geist);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 250px;
+}
+
+.titleInput:hover:not(:disabled) {
+  border-color: var(--border-subtle);
+}
+
+.titleInput:focus:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.editIcon {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.titleGroup:hover .editIcon {
+  opacity: 1;
+}
+
+.visibilityBadge {
+  padding: var(--space-1) var(--space-2);
+  border-radius: 9999px;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.visibilityDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.visibilityDot.private { background-color: var(--error); }
+.visibilityDot.unlisted { background-color: #f59e0b; }
+.visibilityDot.public { background-color: var(--success); }
+
+.visibilityBadge span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.editorHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.saveStatus {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 .splitPaneContainer {
   display: flex;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--bg-primary);
+  background: var(--surface-container-lowest);
   flex-direction: row;
 }
 
@@ -21,19 +124,19 @@
 
 .resizer {
   width: 6px;
-  background-color: var(--bg-primary);
+  background-color: var(--surface-container-lowest);
   cursor: col-resize;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
-  border-left: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
   transition: background-color 0.2s;
 }
 
 .resizer:hover, .resizer:active {
-  background-color: var(--bg-tertiary);
+  background-color: var(--surface-container);
 }
 
 .resizerHandle {

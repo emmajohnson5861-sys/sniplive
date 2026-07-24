@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import { getUnreadNotificationCount } from '@/lib/firebase-db';
-import { LayoutDashboard, Users, Flag, ArrowLeft, Shield, Bell } from 'lucide-react';
+import styles from './AdminLayout.module.css';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, initialized } = useAuthStore();
@@ -39,77 +39,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [user]);
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/moderation', label: 'Moderation', icon: Flag },
-    { href: '/admin/notifications', label: 'Notifications', icon: Bell, badge: unread },
+    { href: '/admin', label: 'Dashboard', icon: 'dashboard' },
+    { href: '/admin/users', label: 'Users', icon: 'group' },
+    { href: '/admin/moderation', label: 'Moderation', icon: 'gavel' },
+    { href: '/admin/notifications', label: 'Notifications', icon: 'notifications', badge: unread },
   ];
 
   if (loading || !initialized || !user || (user.role !== 'ADMIN' && user.role !== 'EDITOR') || user.isBanned) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--surface)', color: 'var(--text-primary)' }}>
         <p>Checking access...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg-primary)' }}>
-      <aside style={{
-        width: 220, background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-      }}>
-        <div style={{
-          height: 56, display: 'flex', alignItems: 'center', gap: '0.5rem',
-          padding: '0 1.25rem', borderBottom: '1px solid var(--border-color)',
-          fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)',
-        }}>
-          <Shield size={20} color="var(--accent-primary)" />
-          Admin
+    <div className={styles.container}>
+      <aside className={styles.sidebar}>
+        <div className={styles.brand}>
+          <h1>Admin Panel</h1>
+          <p>System Control</p>
         </div>
-        <nav style={{ flex: 1, padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        
+        <nav className={styles.nav}>
           {navItems.map((item) => {
-            const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.625rem',
-                  padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)',
-                  fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none',
-                  color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  background: isActive ? 'var(--bg-tertiary)' : 'transparent',
-                }}
+                className={`${styles.navLink} ${isActive ? styles.active : ''}`}
               >
-                <Icon size={16} />
-                {item.label}
+                <span className="material-symbols-outlined">{item.icon}</span>
+                <span>{item.label}</span>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span style={{
-                    marginLeft: 'auto', background: 'var(--error)', color: '#fff',
-                    fontSize: '0.7rem', fontWeight: 700, borderRadius: '10px',
-                    padding: '0.1rem 0.45rem', lineHeight: '1.3',
-                  }}>{item.badge}</span>
+                  <span className={styles.badge}>{item.badge}</span>
                 )}
               </Link>
             );
           })}
+          
+          <div className={styles.backLinkContainer}>
+            <Link href="/" className={styles.backLink}>
+              <span className="material-symbols-outlined">arrow_back</span>
+              <span>Back to app</span>
+            </Link>
+          </div>
         </nav>
-        <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-color)' }}>
-          <Link
-            href="/"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none',
-            }}
-          >
-            <ArrowLeft size={14} />
-            Back to app
-          </Link>
+        
+        <div className={styles.userProfile}>
+          <div className={styles.userProfileInner}>
+            <div className={styles.avatar}>
+              {user?.username?.charAt(0).toUpperCase() || 'A'}
+            </div>
+            <div className={styles.userInfo}>
+              <span className={styles.userName}>{user?.name || 'Admin User'}</span>
+              <span className={styles.userRole}>{user?.role === 'ADMIN' ? 'Super Admin' : 'Moderator'}</span>
+            </div>
+          </div>
         </div>
       </aside>
-      <main style={{ flex: 1, overflow: 'auto', padding: '1.5rem 2rem' }}>
+      
+      <main className={styles.main}>
         {children}
       </main>
     </div>

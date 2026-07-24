@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getReportedSnippets, unreportSnippet, deleteSnippet, FirestoreSnippet } from '@/lib/firebase-db';
-import { Flag, Trash2, CheckCircle } from 'lucide-react';
+import styles from './AdminModeration.module.css';
 
 export default function AdminModeration() {
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
@@ -35,48 +35,67 @@ export default function AdminModeration() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Content Moderation</h1>
+      <header className={styles.header}>
+        <h1>Content Moderation</h1>
+        <nav className={styles.breadcrumb}>
+          <span style={{ cursor: 'pointer' }} className={styles.active}>ADMIN</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chevron_right</span>
+          <span className={styles.active}>MODERATION</span>
+        </nav>
+      </header>
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
       ) : snippets.length === 0 ? (
-        <div style={{
-          background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)', padding: '2rem', textAlign: 'center',
-        }}>
-          <Flag size={32} style={{ color: 'var(--success)', marginBottom: '0.75rem' }} />
-          <p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>No reported snippets</p>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>All clear — nothing needs review.</p>
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>
+            <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>check_circle</span>
+          </div>
+          <h2 className={styles.emptyTitle}>No reported snippets</h2>
+          <p className={styles.emptyDesc}>All clear — nothing needs review. Grab a coffee!</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className={styles.listContainer}>
           {snippets.map((s) => (
-            <div key={s.id} style={{
-              background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem',
-              display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'
-            }}>
-              <Flag size={16} style={{ color: 'var(--error)', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>{s.title}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  by {s.ownerName || s.ownerEmail} &middot; {s.reportCount} report{s.reportCount !== 1 ? 's' : ''} &middot; {s.createdAt?.toDate().toLocaleDateString() || '-'}
+            <div key={s.id} className={styles.snippetCard}>
+              <div className={styles.iconWrapper}>
+                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>report</span>
+              </div>
+              
+              <div className={styles.content}>
+                <div className={styles.titleRow}>
+                  <span className={styles.title}>{s.title}</span>
+                  <span className={styles.reportBadge}>{s.reportCount} report{s.reportCount !== 1 ? 's' : ''}</span>
+                </div>
+                <div className={styles.meta}>
+                  <span>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>person</span>
+                    by {s.ownerName || s.ownerEmail}
+                  </span>
+                  <span>&middot;</span>
+                  <span>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>calendar_today</span>
+                    {s.createdAt?.toDate().toLocaleDateString() || '-'}
+                  </span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
-                <button onClick={() => handleDismiss(s.id)} title="Dismiss report" style={{
-                  padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)', background: 'transparent',
-                  color: 'var(--success)', cursor: 'pointer',
-                }}>
-                  <CheckCircle size={14} />
+
+              <div className={styles.actions}>
+                <button 
+                  onClick={() => handleDismiss(s.id)} 
+                  className={`${styles.btn} ${styles.btnDismiss}`}
+                  title="Dismiss report"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>done</span>
+                  Dismiss
                 </button>
-                <button onClick={() => handleDelete(s.id)} title="Delete snippet" style={{
-                  padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)', background: 'transparent',
-                  color: 'var(--error)', cursor: 'pointer',
-                }}>
-                  <Trash2 size={14} />
+                <button 
+                  onClick={() => handleDelete(s.id)} 
+                  className={`${styles.btn} ${styles.btnDelete}`}
+                  title="Delete snippet"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                  Delete
                 </button>
               </div>
             </div>

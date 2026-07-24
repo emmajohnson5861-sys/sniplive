@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { sendNotification } from '@/lib/firebase-db';
 import { useAuthStore } from '@/store/auth-store';
-import { AlertTriangle, Send } from 'lucide-react';
 import styles from './BannedUserView.module.css';
 
 export default function BannedUserView({ inline = false }: { inline?: boolean }) {
@@ -9,11 +8,22 @@ export default function BannedUserView({ inline = false }: { inline?: boolean })
   const [requestSent, setRequestSent] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const handleInteraction = () => {
-    if (!inline) {
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500);
-    }
+  // Expose shake function globally so layout click handlers can trigger it
+  useEffect(() => {
+    const handleGlobalShake = () => {
+      if (!isShaking) {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
+      }
+    };
+    window.addEventListener('trigger-ban-shake', handleGlobalShake);
+    return () => window.removeEventListener('trigger-ban-shake', handleGlobalShake);
+  }, [isShaking]);
+
+  const handleInteraction = (e: React.MouseEvent) => {
+    // If they click the background, we shake the button
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
   };
 
   const handleRequestUnban = async (e: React.MouseEvent) => {
@@ -33,9 +43,9 @@ export default function BannedUserView({ inline = false }: { inline?: boolean })
   };
 
   const content = (
-    <div className={styles.bannedCard} style={inline ? { boxShadow: 'none', border: '1px solid var(--error)' } : {}}>
+    <div className={styles.bannedCard} style={inline ? { boxShadow: 'none', border: '1px solid var(--error)' } : {}} onClick={(e) => e.stopPropagation()}>
       <div className={styles.iconWrapper}>
-        <AlertTriangle size={48} color="var(--error)" />
+        <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--error)' }}>warning</span>
       </div>
       <h1 className={styles.title}>Account Suspended</h1>
       <p className={styles.description}>
@@ -47,7 +57,7 @@ export default function BannedUserView({ inline = false }: { inline?: boolean })
           className={`${styles.unbanBtn} ${isShaking ? styles.shake : ''}`} 
           onClick={handleRequestUnban}
         >
-          <Send size={18} />
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>send</span>
           Request Unban
         </button>
       ) : (

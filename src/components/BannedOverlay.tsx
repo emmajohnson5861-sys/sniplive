@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
-import { AlertTriangle } from 'lucide-react';
 import { sendNotification } from '@/lib/firebase-db';
 
 export default function BannedOverlay() {
@@ -13,11 +12,10 @@ export default function BannedOverlay() {
   const [shake, setShake] = useState(false);
   const [unbanRequested, setUnbanRequested] = useState(false);
 
-  // Do not show anything if not initialized, user is not logged in, or user is not banned
+  // Let them view profiles unhindered (where they can already request unban)
   if (!initialized || !user || !user.isBanned) return null;
 
-  // Let them view profiles unhindered (where they can already request unban)
-  if (pathname.startsWith('/u/')) return null;
+  if (pathname.endsWith('/profile')) return null;
 
   const handleOverlayClick = () => {
     setShake(true);
@@ -44,7 +42,7 @@ export default function BannedOverlay() {
 
   const handleGoToProfile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/u/${user.username || firebaseUser?.uid}`);
+    router.push(`/${user.username || firebaseUser?.uid}/profile`);
   };
 
   return (
@@ -64,7 +62,7 @@ export default function BannedOverlay() {
       <div 
         onClick={(e) => e.stopPropagation()} 
         style={{
-          background: 'var(--bg-secondary)',
+          background: 'var(--surface-container)',
           border: '1px solid var(--error)',
           padding: '2.5rem',
           borderRadius: 'var(--radius-lg)',
@@ -74,9 +72,9 @@ export default function BannedOverlay() {
           width: '90%',
         }}
       >
-        <AlertTriangle size={48} color="var(--error)" style={{ margin: '0 auto 1rem' }} />
-        <h2 style={{ color: 'var(--error)', marginBottom: '0.5rem', fontSize: '1.5rem', fontWeight: 700 }}>Account Suspended</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.5 }}>
+        <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--error)', margin: '0 auto 1rem', display: 'block' }}>warning</span>
+        <h2 style={{ color: 'var(--error)', marginBottom: '0.5rem', fontSize: '1.5rem', fontWeight: 700, fontFamily: 'var(--font-geist)' }}>Account Suspended</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.5, fontFamily: 'var(--font-geist)' }}>
           Your account has been banned due to a violation of our terms. You can no longer create or interact with snippets.
         </p>
         
@@ -86,8 +84,8 @@ export default function BannedOverlay() {
             disabled={unbanRequested}
             className={shake ? 'shake-animation' : ''}
             style={{
-              background: unbanRequested ? 'var(--bg-tertiary)' : 'var(--accent-primary)',
-              color: unbanRequested ? 'var(--text-secondary)' : '#fff',
+              background: unbanRequested ? 'var(--surface-variant)' : 'var(--primary)',
+              color: unbanRequested ? 'var(--text-secondary)' : 'var(--on-primary)',
               border: 'none', 
               padding: '0.85rem', 
               borderRadius: 'var(--radius-md)',
@@ -95,6 +93,7 @@ export default function BannedOverlay() {
               cursor: unbanRequested ? 'not-allowed' : 'pointer',
               fontSize: '1rem',
               transition: 'background 0.2s',
+              fontFamily: 'var(--font-geist)',
             }}
           >
             {unbanRequested ? 'Request Sent' : 'Request Unban'}
@@ -105,13 +104,14 @@ export default function BannedOverlay() {
             style={{
               background: 'transparent',
               color: 'var(--text-secondary)',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-subtle)',
               padding: '0.85rem',
               borderRadius: 'var(--radius-md)',
               fontWeight: 500,
               cursor: 'pointer',
               fontSize: '0.9rem',
               transition: 'all 0.2s',
+              fontFamily: 'var(--font-geist)',
             }}
           >
             View My Profile

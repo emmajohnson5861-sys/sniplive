@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Sidebar.module.css';
-import { Code2, Plus, Search, FileCode2, UserCircle2, Sun, Moon, Trash2, Shield, Folder, FolderPlus, Globe, Share2 } from 'lucide-react';
 import { useSnippetContext, Group } from '@/context/SnippetContext';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import AuthModal from './AuthModal';
 import GroupShareModal from './GroupShareModal';
+import CreateSnippetModal from './CreateSnippetModal';
 import { useSidebar } from '@/context/SidebarContext';
 
 export default function Sidebar() {
@@ -17,29 +17,14 @@ export default function Sidebar() {
   const router = useRouter();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeShareGroup, setActiveShareGroup] = useState<Group | null>(null);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [searchQuery, setSearchQuery] = useState('');
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
     initAuthListener();
   }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('sniplive_theme') as 'dark' | 'light' | null;
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.dataset.theme = saved;
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    document.documentElement.dataset.theme = next;
-    localStorage.setItem('sniplive_theme', next);
-  };
 
   const filteredSnippets = snippets.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredGroups = groups.filter(g => g.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -49,42 +34,38 @@ export default function Sidebar() {
     if (title) createNewGroup(title, '');
   };
 
+  const handleCreateSnippet = (title: string) => {
+    if (user?.isBanned) {
+      window.dispatchEvent(new CustomEvent('trigger-ban-shake'));
+      return;
+    }
+    createNewSnippet(title);
+  };
+
   return (
     <>
       {isOpen && <div className={styles.overlay} onClick={closeMobile} />}
       <div className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
-        <div className={styles.logoArea}>
-          <div className={styles.logo}>
-            <Code2 size={24} color="var(--accent-primary)" />
-            Snip<span>Live</span>
-          </div>
-        </div>
-
+        
         <div className={styles.actions}>
-          <button className="btn-primary w-full" onClick={() => {
-            createNewSnippet();
+          <button className={styles.newSnippetBtn} onClick={() => {
+            if (user?.isBanned) {
+              window.dispatchEvent(new CustomEvent('trigger-ban-shake'));
+              return;
+            }
+            setIsCreateModalOpen(true);
           }}>
-            <Plus size={16} />
+            <span className="material-symbols-outlined">add</span>
             New Snippet
           </button>
         </div>
 
-        <div className={styles.searchBox}>
-          <Search size={16} className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Search snippets..." 
-            className={styles.searchInput} 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <nav className={styles.navLinks}>
+          <div className={styles.snippetItem}>
+            <span className="material-symbols-outlined">code_blocks</span>
+            <span style={{ fontWeight: 500, flex: 1 }}>All Snippets</span>
+          </div>
 
-        <div className={styles.libraryHeader}>
-          My Library
-        </div>
-
-        <div className={styles.snippetList}>
           {filteredSnippets.map(snippet => (
             <div 
               key={snippet.id} 
@@ -93,8 +74,9 @@ export default function Sidebar() {
                 setActiveSnippetId(snippet.id);
                 closeMobile();
               }}
+              style={{ paddingLeft: '3rem' }} // indent slightly under 'All Snippets'
             >
-              <FileCode2 size={16} className={snippet.id === activeSnippetId ? styles.iconActive : styles.iconInactive} />
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>
               <div className={styles.snippetInfo}>
                 <div className={styles.snippetTitle}>{snippet.title}</div>
                 <div className={styles.snippetDate}>
@@ -105,88 +87,82 @@ export default function Sidebar() {
                 className={styles.deleteBtn}
                 onClick={(e) => { e.stopPropagation(); deleteSnippet(snippet.id); }}
                 title="Delete snippet"
+                style={{ position: 'absolute', right: '1rem', background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
               >
-                <Trash2 size={14} />
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
               </button>
             </div>
           ))}
-        </div>
 
-        {firebaseUser && (
-          <>
-            <div className={styles.libraryHeader}>
-              Collections
-              <button onClick={handleCreateGroup} title="New Collection">
-                <FolderPlus size={16} />
-              </button>
-            </div>
-            
-            <div className={styles.groupList}>
-              {filteredGroups.map(group => (
-                <div 
-                  key={group.id} 
-                  className={styles.snippetItem}
-                  onClick={() => {
-                    router.push(`/${user?.username}/c/${group.slug || group.id}`);
-                    closeMobile();
-                  }}
-                >
-                  <Folder size={16} className={styles.iconInactive} />
-                  <div className={styles.snippetInfo}>
-                    <div className={styles.snippetTitle}>{group.title}</div>
-                    <div className={styles.snippetDate}>
-                      {group.snippetIds.length} snippets
+          {firebaseUser && (
+            <>
+              <div className={styles.snippetItem} style={{ marginTop: 'var(--space-2)' }}>
+                <span className="material-symbols-outlined">folder</span>
+                <span style={{ fontWeight: 500, flex: 1 }}>Collections</span>
+                <button onClick={handleCreateGroup} title="New Collection" style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>create_new_folder</span>
+                </button>
+              </div>
+              
+              <div>
+                {filteredGroups.map(group => (
+                  <div 
+                    key={group.id} 
+                    className={styles.snippetItem}
+                    onClick={() => {
+                      router.push(`/${user?.username}/c/${group.slug || group.id}`);
+                      closeMobile();
+                    }}
+                    style={{ paddingLeft: '3rem' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>folder_open</span>
+                    <div className={styles.snippetInfo}>
+                      <div className={styles.snippetTitle}>{group.title}</div>
+                      <div className={styles.snippetDate}>
+                        {group.snippetIds.length} snippets
+                      </div>
+                    </div>
+                    <div className={styles.actionBtns}>
+                      <button
+                        className={`${styles.actionBtn} ${styles.actionBtnShare}`}
+                        onClick={(e) => { e.stopPropagation(); setActiveShareGroup(group); }}
+                        title="Share collection"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>share</span>
+                      </button>
+                      <button
+                        className={styles.actionBtn}
+                        onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
+                        title="Delete collection"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                      </button>
                     </div>
                   </div>
-                  <div className={styles.actionBtns}>
-                    <button
-                      className={`${styles.actionBtn} ${styles.actionBtnShare}`}
-                      onClick={(e) => { e.stopPropagation(); setActiveShareGroup(group); }}
-                      title="Share collection"
-                    >
-                      <Share2 size={14} />
-                    </button>
-                    <button
-                      className={styles.actionBtn}
-                      onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
-                      title="Delete collection"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
+        </nav>
 
         <div className={styles.userProfile}>
-          {initialized && user ? (
-            <>
-              {user.avatarUrl && <img src={user.avatarUrl} alt="" className={styles.avatar} />}
-              <div className={styles.userInfo}>
-                <span className={styles.userName}>{user.name || user.email}</span>
-                <span className={styles.userEmail}>{user.email}</span>
-              </div>
-              <button className={styles.adminBtn} onClick={() => router.push(`/${user.username || firebaseUser?.uid}/profile`)} title="My Public Profile">
-                <Globe size={16} />
-              </button>
-              {(user.role === 'ADMIN' || user.role === 'EDITOR') && (
-                <button className={styles.adminBtn} onClick={() => router.push('/admin')} title="Admin Panel">
-                  <Shield size={16} />
-                </button>
-              )}
-              <button className={styles.logoutBtn} onClick={logout} title="Sign out">Sign Out</button>
-            </>
-          ) : (
-            <button className={styles.userButton} onClick={() => setIsAuthModalOpen(true)}>
-              <UserCircle2 size={24} color="var(--text-secondary)" />
-              <span>Sign In</span>
-            </button>
+          <a href="#" className={styles.settingsLink}>
+            <span className="material-symbols-outlined">settings</span>
+            <span style={{ fontWeight: 500 }}>Settings</span>
+          </a>
+          
+          {initialized && user && (user.role === 'ADMIN' || user.role === 'EDITOR') && (
+            <a href="/admin" className={styles.settingsLink} onClick={(e) => { e.preventDefault(); router.push('/admin'); }}>
+              <span className="material-symbols-outlined">shield</span>
+              <span style={{ fontWeight: 500 }}>Admin Panel</span>
+            </a>
           )}
-          <button className={styles.themeToggle} onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          {initialized && user && (
+            <a href="#" className={styles.settingsLink} onClick={(e) => { e.preventDefault(); logout(); }}>
+              <span className="material-symbols-outlined">logout</span>
+              <span style={{ fontWeight: 500 }}>Sign Out</span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -194,6 +170,7 @@ export default function Sidebar() {
       {activeShareGroup && (
         <GroupShareModal isOpen={true} onClose={() => setActiveShareGroup(null)} group={activeShareGroup} />
       )}
+      <CreateSnippetModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreate={handleCreateSnippet} />
     </>
   );
 }
