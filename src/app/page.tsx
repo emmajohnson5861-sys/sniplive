@@ -47,7 +47,7 @@ export default function LandingPage() {
             <span className={styles.logo}>SnipLive</span>
             <div className={styles.navLinks}>
               <a href="#" className={styles.navLinkActive}>Explore</a>
-              <a href="#" className={styles.navLink}>Community</a>
+              <Link href="/components" className={styles.navLink}>Components</Link>
             </div>
           </div>
           <div className={styles.navActions}>

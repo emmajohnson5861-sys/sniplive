@@ -3,22 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Sidebar.module.css';
-import { useSnippetContext, Group } from '@/context/SnippetContext';
+import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import AuthModal from './AuthModal';
-import GroupShareModal from './GroupShareModal';
 import CreateSnippetModal from './CreateSnippetModal';
 import { useSidebar } from '@/context/SidebarContext';
 
 export default function Sidebar() {
-  const { snippets, groups, activeSnippetId, setActiveSnippetId, createNewSnippet, deleteSnippet, createNewGroup, deleteGroup } = useSnippetContext();
+  const { snippets, activeSnippetId, setActiveSnippetId, createNewSnippet, deleteSnippet } = useSnippetContext();
   const { user, firebaseUser, initialized, logout } = useAuthStore();
   const { isOpen, closeMobile } = useSidebar();
   const router = useRouter();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [activeShareGroup, setActiveShareGroup] = useState<Group | null>(null);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -27,12 +25,6 @@ export default function Sidebar() {
   }, []);
 
   const filteredSnippets = snippets.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
-  const filteredGroups = groups.filter(g => g.title.toLowerCase().includes(searchQuery.toLowerCase()));
-
-  const handleCreateGroup = () => {
-    const title = prompt("Enter collection name:");
-    if (title) createNewGroup(title, '');
-  };
 
   const handleCreateSnippet = (title: string) => {
     if (user?.isBanned) {
@@ -74,7 +66,7 @@ export default function Sidebar() {
                 setActiveSnippetId(snippet.id);
                 closeMobile();
               }}
-              style={{ paddingLeft: '3rem' }} // indent slightly under 'All Snippets'
+              style={{ paddingLeft: '3rem' }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>
               <div className={styles.snippetInfo}>
@@ -93,56 +85,6 @@ export default function Sidebar() {
               </button>
             </div>
           ))}
-
-          {firebaseUser && (
-            <>
-              <div className={styles.snippetItem} style={{ marginTop: 'var(--space-2)' }}>
-                <span className="material-symbols-outlined">folder</span>
-                <span style={{ fontWeight: 500, flex: 1 }}>Collections</span>
-                <button onClick={handleCreateGroup} title="New Collection" style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>create_new_folder</span>
-                </button>
-              </div>
-              
-              <div>
-                {filteredGroups.map(group => (
-                  <div 
-                    key={group.id} 
-                    className={styles.snippetItem}
-                    onClick={() => {
-                      router.push(`/${user?.username}/c/${group.slug || group.id}`);
-                      closeMobile();
-                    }}
-                    style={{ paddingLeft: '3rem' }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>folder_open</span>
-                    <div className={styles.snippetInfo}>
-                      <div className={styles.snippetTitle}>{group.title}</div>
-                      <div className={styles.snippetDate}>
-                        {group.snippetIds.length} snippets
-                      </div>
-                    </div>
-                    <div className={styles.actionBtns}>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnShare}`}
-                        onClick={(e) => { e.stopPropagation(); setActiveShareGroup(group); }}
-                        title="Share collection"
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>share</span>
-                      </button>
-                      <button
-                        className={styles.actionBtn}
-                        onClick={(e) => { e.stopPropagation(); deleteGroup(group.id); }}
-                        title="Delete collection"
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
         </nav>
 
         <div className={styles.userProfile}>
@@ -167,9 +109,6 @@ export default function Sidebar() {
       </div>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} defaultMode={authMode} />
-      {activeShareGroup && (
-        <GroupShareModal isOpen={true} onClose={() => setActiveShareGroup(null)} group={activeShareGroup} />
-      )}
       <CreateSnippetModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreate={handleCreateSnippet} />
     </>
   );

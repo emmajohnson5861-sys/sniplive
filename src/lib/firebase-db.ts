@@ -27,6 +27,7 @@ export interface FirestoreSnippet {
   css: string;
   js: string;
   visibility: 'private' | 'unlisted' | 'public';
+  isLive: boolean;
   allowForking: boolean;
   forkedFromId: string | null;
   viewCount: number;
@@ -34,6 +35,7 @@ export interface FirestoreSnippet {
   ownerId: string;
   ownerName: string | null;
   ownerEmail: string;
+  ownerUsername?: string | null;
   collaborators: string[];
   pendingRequests: string[];
   isReported: boolean;
@@ -159,19 +161,34 @@ export async function generateUniqueSnippetSlug(userId: string, title: string): 
 export async function createSnippet(data: {
   id: string; title: string; html: string; css: string; js: string;
   ownerId: string; ownerName: string | null; ownerEmail: string;
+  ownerUsername?: string | null;
   forkedFromId?: string | null;
 }) {
   const slug = await generateUniqueSnippetSlug(data.ownerId, data.title);
   await setDoc(doc(db, 'snippets', data.id), {
     title: data.title, slug, html: data.html, css: data.css, js: data.js,
-    visibility: 'private', allowForking: true, forkedFromId: data.forkedFromId || null,
+    visibility: 'private', isLive: false, allowForking: true, forkedFromId: data.forkedFromId || null,
     viewCount: 0, likeCount: 0,
     ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
+    ownerUsername: data.ownerUsername || null,
     collaborators: [data.ownerId], pendingRequests: [],
     isReported: false, reportCount: 0,
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
   await updateDoc(doc(db, 'users', data.ownerId), { snippetCount: (await getDoc(doc(db, 'users', data.ownerId))).data()?.snippetCount + 1 || 1 } as any);
+}
+
+export async function getLiveSnippets(options?: { search?: string; limitSize?: number }): Promise<FirestoreSnippet[]> {
+  const { search = '', limitSize = 50 } = options || {};
+  const snippetsRef = collection(db, 'snippets');
+  const q = query(snippetsRef, where('isLive', '==', true), orderBy('createdAt', 'desc'), limit(limitSize));
+  const snap = await getDocs(q);
+  let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreSnippet));
+  if (search) {
+    const lower = search.toLowerCase();
+    results = results.filter(s => s.title?.toLowerCase().includes(lower) || s.ownerName?.toLowerCase().includes(lower));
+  }
+  return results;
 }
 
 export async function updateSnippet(id: string, data: Partial<FirestoreSnippet>) {

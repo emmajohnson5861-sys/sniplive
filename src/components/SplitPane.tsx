@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import LivePreview from './LivePreview';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
+import { updateSnippet } from '@/lib/firebase-db';
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), { ssr: false });
 
@@ -22,6 +23,9 @@ export default function SplitPane() {
   const [title, setTitle] = useState(activeSnippet?.title || 'Untitled Snippet');
   const [isSaved, setIsSaved] = useState(true);
   const [visibility, setVisibility] = useState<'private' | 'unlisted' | 'public'>(activeSnippet?.visibility || 'private');
+  const [isLive, setIsLive] = useState(activeSnippet?.isLive || false);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveToast, setLiveToast] = useState<string | null>(null);
   
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
@@ -32,6 +36,7 @@ export default function SplitPane() {
     if (activeSnippet) {
       setTitle(activeSnippet.title);
       setVisibility(activeSnippet.visibility || 'private');
+      setIsLive(activeSnippet.isLive || false);
       if (lastSavedCloud.current.id !== activeSnippet.id) {
         setHtmlCode(activeSnippet.html);
         setCssCode(activeSnippet.css);
@@ -161,6 +166,22 @@ export default function SplitPane() {
     }
   };
 
+  const handleToggleLive = async () => {
+    if (!activeSnippet || !isOwner) return;
+    setLiveLoading(true);
+    const newVal = !isLive;
+    try {
+      await updateSnippet(activeSnippet.id, { isLive: newVal } as any);
+      setIsLive(newVal);
+      setLiveToast(newVal ? '✅ Snippet is now live on SnipLive Components!' : '⬜ Snippet removed from SnipLive Components');
+      setTimeout(() => setLiveToast(null), 3000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLiveLoading(false);
+    }
+  };
+
   if (!activeSnippet) {
     return (
       <div className={styles.emptyState}>
@@ -193,12 +214,46 @@ export default function SplitPane() {
         </div>
         <div className={styles.editorHeaderRight}>
           {!isSaved && <p className={styles.saveStatus}>Unsaved changes</p>}
+          {isOwner && (
+            <button
+              onClick={handleToggleLive}
+              disabled={liveLoading}
+              title={isLive ? 'Remove from SnipLive Components' : 'Publish to SnipLive Components'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '0.4rem 0.75rem',
+                borderRadius: 'var(--radius-DEFAULT)',
+                border: `1px solid ${isLive ? 'var(--primary)' : 'var(--border-subtle)'}`,
+                background: isLive ? 'rgba(126,214,205,0.1)' : 'transparent',
+                color: isLive ? 'var(--primary)' : 'var(--text-secondary)',
+                fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                transition: 'all 0.2s',
+                opacity: liveLoading ? 0.6 : 1,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                {isLive ? 'public' : 'public_off'}
+              </span>
+              {isLive ? 'Live' : 'Go Live'}
+            </button>
+          )}
           <button className="btn-primary" onClick={handleSave} disabled={!isOwner && !activeSnippet.collaborators?.includes(user?.id || '')}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>
             Save
           </button>
         </div>
       </div>
+      {liveToast && (
+        <div style={{
+          position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--surface-container-highest)', border: '1px solid var(--primary)',
+          color: 'var(--on-surface)', padding: '0.75rem 1.25rem',
+          borderRadius: 'var(--radius-lg)', fontSize: '13px', zIndex: 9999,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        }}>
+          {liveToast}
+        </div>
+      )}
 
       <div className={`${styles.splitPaneContainer} ${isMobile ? styles.splitPaneContainerMobile : ''}`}>
         {isMobile && (

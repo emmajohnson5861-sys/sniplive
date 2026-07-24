@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getUserByUsernameOrId, getPublicUserSnippets, getPublicUserGroups, getUserSnippets, FirestoreUser, FirestoreSnippet, FirestoreGroup, sendNotification } from '@/lib/firebase-db';
-import { User, Code2, Folder, Globe, Home, AlertTriangle } from 'lucide-react';
+import { getUserByUsernameOrId, getPublicUserSnippets, getUserSnippets, FirestoreUser, FirestoreSnippet, sendNotification } from '@/lib/firebase-db';
+import { User, Code2, Globe, Home, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import SnippetPreviewCard from '@/components/SnippetPreviewCard';
@@ -15,7 +15,6 @@ export default function UserProfilePage() {
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const { firebaseUser, initialized } = useAuthStore();
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
-  const [groups, setGroups] = useState<FirestoreGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [unbanRequested, setUnbanRequested] = useState(false);
 
@@ -24,7 +23,6 @@ export default function UserProfilePage() {
   }, []);
 
   useEffect(() => {
-    // Wait until auth is initialized before deciding which snippets to fetch
     if (!username || !initialized) return;
     const fetchData = async () => {
       setLoading(true);
@@ -39,9 +37,7 @@ export default function UserProfilePage() {
           } else {
             s = await getPublicUserSnippets(u.id);
           }
-          const g = await getPublicUserGroups(u.id);
           setSnippets(s);
-          setGroups(g);
         }
       } catch (err) {
         console.error(err);
@@ -68,7 +64,6 @@ export default function UserProfilePage() {
     }
   };
 
-
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
@@ -88,7 +83,7 @@ export default function UserProfilePage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      {/* Top nav bar with home link */}
+      {/* Top nav bar */}
       <div style={{ padding: '0.85rem 2rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 700, fontSize: '1.1rem' }}>
           <Code2 size={20} color="var(--accent-primary)" />
@@ -101,78 +96,57 @@ export default function UserProfilePage() {
         </Link>
       </div>
       <div style={{ padding: '2rem' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        
-        {/* Profile Header */}
-        <div className={styles.profileHeader}>
-          <div className={styles.avatar}>
-            <User size={40} color="var(--text-secondary)" />
-          </div>
-          <div className={styles.info}>
-            <h1 className={styles.title}>{userProfile.name || 'Anonymous User'}</h1>
-            <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <Globe size={16} /> {firebaseUser?.uid === userProfile.id ? 'Your Profile' : 'Public Profile'}
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Profile Header */}
+          <div className={styles.profileHeader}>
+            <div className={styles.avatar}>
+              <User size={40} color="var(--text-secondary)" />
+            </div>
+            <div className={styles.info}>
+              <h1 className={styles.title}>{userProfile.name || 'Anonymous User'}</h1>
+              <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <Globe size={16} /> {firebaseUser?.uid === userProfile.id ? 'Your Profile' : 'Public Profile'}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Banned Message */}
-        {userProfile.isBanned && (
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            {firebaseUser?.uid === userProfile.id ? (
-               <BannedUserView inline={true} />
-            ) : (
-              <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--error)', textAlign: 'center', width: '100%' }}>
-                <AlertTriangle size={48} color="var(--error)" style={{ margin: '0 auto 1rem' }} />
-                <h2 style={{ color: 'var(--error)' }}>This account has been suspended.</h2>
-              </div>
-            )}
-          </div>
-        )}
-
-        {!userProfile.isBanned && (
-          <>
-            {/* Public Groups */}
-            {groups.length > 0 && (
-              <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Folder size={20} color="var(--accent-primary)" />
-                  Public Collections
-                </h2>
-                <div className={styles.grid}>
-                  {groups.map(g => (
-                    <Link key={g.id} href={`/${userProfile.username}/c/${g.slug || g.id}`} style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.2s', cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}>
-                      <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{g.title}</div>
-                      {g.description && <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{g.description}</div>}
-                      <div style={{ marginTop: 'auto', paddingTop: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        {g.snippetIds?.length || 0} Snippets
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Public Snippets */}
-            <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Code2 size={20} color="var(--accent-primary)" />
-                {firebaseUser?.uid === userProfile.id ? 'All Snippets' : 'Public Snippets'}
-              </h2>
-              {snippets.length === 0 ? (
-                <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No snippets available.</div>
+          {/* Banned Message */}
+          {userProfile.isBanned && (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {firebaseUser?.uid === userProfile.id ? (
+                 <BannedUserView inline={true} />
               ) : (
-                <div className={styles.grid}>
-                  {snippets.map(s => (
-                    <SnippetPreviewCard key={s.id} snippet={s} isOwner={firebaseUser?.uid === userProfile.id} />
-                  ))}
+                <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--error)', textAlign: 'center', width: '100%' }}>
+                  <AlertTriangle size={48} color="var(--error)" style={{ margin: '0 auto 1rem' }} />
+                  <h2 style={{ color: 'var(--error)' }}>This account has been suspended.</h2>
                 </div>
               )}
             </div>
-          </>
-        )}
+          )}
 
-      </div>
+          {!userProfile.isBanned && (
+            <>
+              {/* Snippets */}
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Code2 size={20} color="var(--accent-primary)" />
+                  {firebaseUser?.uid === userProfile.id ? 'All Snippets' : 'Public Snippets'}
+                </h2>
+                {snippets.length === 0 ? (
+                  <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No snippets available.</div>
+                ) : (
+                  <div className={styles.grid}>
+                    {snippets.map(s => (
+                      <SnippetPreviewCard key={s.id} snippet={s} isOwner={firebaseUser?.uid === userProfile.id} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+        </div>
       </div>
     </div>
   );
