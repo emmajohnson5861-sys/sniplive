@@ -60,11 +60,22 @@ export default function ComponentsPage() {
 
   const visibleSnippets = filtered.slice(0, displayCount);
 
-  const getCodePreview = (s: FirestoreSnippet) => {
-    if (s.html && s.html.trim()) return s.html.slice(0, 200);
-    if (s.css && s.css.trim()) return s.css.slice(0, 200);
-    if (s.js && s.js.trim()) return s.js.slice(0, 200);
-    return '// No code preview';
+  const getIframeDoc = (s: FirestoreSnippet) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; background: transparent; }
+            ${s.css}
+          </style>
+        </head>
+        <body>
+          ${s.html}
+          <script>${s.js}</script>
+        </body>
+      </html>
+    `;
   };
 
   const getLangLabel = (s: FirestoreSnippet) => {
@@ -218,93 +229,40 @@ export default function ComponentsPage() {
                   return (
                     <article
                       key={s.id}
-                      className={`${styles.card} ${isLarge ? styles.cardLarge : ''}`}
+                      className={styles.card}
                       onClick={() => router.push(snippetUrl)}
                     >
-                      {isTrending && <span className={styles.trendingBadge}>Trending</span>}
-
-                      <div className={styles.cardHeader}>
-                        <div className={styles.cardHeaderLeft}>
-                          <span className={styles.cardLang}>{getLangLabel(s)}</span>
+                      <div className={styles.cardPreviewBox}>
+                        <iframe 
+                          srcDoc={getIframeDoc(s)}
+                          className={styles.cardIframe}
+                          sandbox="allow-scripts"
+                          scrolling="no"
+                        />
+                        <div className={styles.cardPreviewOverlay}></div>
+                      </div>
+                      
+                      <div className={styles.cardInfo}>
+                        <div className={styles.cardHeader}>
                           <h2 className={styles.cardTitle}>{s.liveTitle || s.title}</h2>
+                          <span className={styles.cardLang}>{getLangLabel(s)}</span>
                         </div>
-                        <div className={styles.cardActions}>
-                          {user && (
-                            <button
-                              className={styles.cardActionBtn}
-                              title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                
-                                const newFavorites = isFavorited 
-                                  ? (user.favoriteSnippets || []).filter(id => id !== s.id)
-                                  : [...(user.favoriteSnippets || []), s.id];
-                                
-                                useAuthStore.getState().updateLocalUser({ favoriteSnippets: newFavorites });
-
-                                try {
-                                  await toggleFavoriteSnippet(user.id, s.id, !isFavorited);
-                                } catch (err) {
-                                  console.error(err);
-                                  useAuthStore.getState().updateLocalUser({ favoriteSnippets: user.favoriteSnippets });
-                                }
-                              }}
-                              style={{ color: isFavorited ? 'var(--primary)' : 'inherit' }}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorited ? "'FILL' 1" : "'FILL' 0" }}>
-                                favorite
-                              </span>
-                            </button>
-                          )}
-                          <button
-                            className={styles.cardActionBtn}
-                            title="Copy code"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(s.html + '\n' + s.css + '\n' + s.js);
-                            }}
-                          >
-                            <span className="material-symbols-outlined">content_copy</span>
-                          </button>
-                          <button
-                            className={styles.openBtn}
-                            title="Open snippet"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(snippetUrl);
-                            }}
-                          >
-                            <span className="material-symbols-outlined">open_in_new</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className={styles.codeWell}>
-                        <pre>{getCodePreview(s)}</pre>
-                        <div className={styles.codeWellFade}></div>
-                      </div>
-
-                      {s.liveTags && s.liveTags.length > 0 && (
-                        <div className={styles.tagRow}>
-                          {s.liveTags.map(tag => (
-                            <span key={tag} className={styles.tag}>{tag}</span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className={styles.cardFooter}>
-                        <div className={styles.authorRow}>
-                          <div className={styles.authorAvatar}>
-                            {s.ownerName?.[0]?.toUpperCase() || 'U'}
+                        
+                        <div className={styles.cardDivider}></div>
+                        
+                        <div className={styles.cardFooter}>
+                          <div className={styles.cardStats}>
+                            <span className={styles.statItem}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>visibility</span>
+                              {(s.viewCount || 0).toLocaleString()}
+                            </span>
+                            <span className={styles.statItem}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>favorite</span>
+                              {(s.likeCount || 0).toLocaleString()}
+                            </span>
                           </div>
-                          <span className={styles.authorName}>
-                            By {s.ownerName || s.ownerEmail} &middot; {getRelativeTime(s.createdAt)}
-                          </span>
+                          <span className={styles.cardTime}>{getRelativeTime(s.createdAt)}</span>
                         </div>
-                        <span className={styles.viewCount}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>visibility</span>
-                          {(s.viewCount || 0).toLocaleString()}
-                        </span>
                       </div>
                     </article>
                   );
