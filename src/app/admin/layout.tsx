@@ -7,9 +7,11 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import { getUnreadNotificationCount } from '@/lib/firebase-db';
 import styles from './AdminLayout.module.css';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, initialized } = useAuthStore();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
@@ -78,6 +80,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             );
           })}
+          
+          <button 
+            onClick={toggleTheme} 
+            className={styles.navLink} 
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', color: 'var(--text-secondary)' }}
+          >
+            <span className="material-symbols-outlined">
+              {theme === 'light' ? 'dark_mode' : 'light_mode'}
+            </span>
+            <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+          </button>
           
           <div className={styles.backLinkContainer}>
             <Link href="/" className={styles.backLink}>

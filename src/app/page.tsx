@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth-store';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/context/ThemeContext';
 import AuthModal from '@/components/AuthModal';
 import styles from './LandingPage.module.css';
 
 export default function LandingPage() {
   const { user, firebaseUser, initialized } = useAuthStore();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -51,6 +53,15 @@ export default function LandingPage() {
             </div>
           </div>
           <div className={styles.navActions}>
+            <button 
+              onClick={toggleTheme}
+              className={styles.themeToggleBtn}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              <span className="material-symbols-outlined">
+                {theme === 'light' ? 'dark_mode' : 'light_mode'}
+              </span>
+            </button>
             {initialized && firebaseUser && user ? (
               /* Logged-in state */
               <>

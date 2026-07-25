@@ -4,10 +4,12 @@ import React from 'react';
 import styles from './Header.module.css';
 import { useAuthStore } from '@/store/auth-store';
 import { useSidebar } from '@/context/SidebarContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Header() {
   const { user } = useAuthStore();
   const { toggle: toggleSidebar } = useSidebar();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className={styles.header}>
@@ -24,12 +26,10 @@ export default function Header() {
       </div>
       
       <div className={styles.rightSection}>
-        <button className={styles.iconBtn} onClick={toggleSidebar}>
-          <span className="material-symbols-outlined">dark_mode</span>
-        </button>
-        <button className={styles.iconBtn}>
-          <span className="material-symbols-outlined">notifications</span>
-          <span className={styles.notificationBadge}></span>
+        <button className={styles.iconBtn} onClick={toggleTheme} title="Toggle Theme">
+          <span className="material-symbols-outlined">
+            {theme === 'light' ? 'dark_mode' : 'light_mode'}
+          </span>
         </button>
         <div className={styles.divider}></div>
         

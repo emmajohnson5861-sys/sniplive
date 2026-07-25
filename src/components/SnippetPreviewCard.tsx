@@ -55,7 +55,7 @@ export default function SnippetPreviewCard({ snippet, isOwner }: SnippetPreviewC
 
   return (
     <div ref={containerRef} className={styles.cardContainer}>
-      <Link href={`/s/${snippet.id}`} className={styles.linkWrapper}>
+      <Link href={`/${snippet.ownerUsername || snippet.ownerId}/snippets/${snippet.slug || snippet.id}`} className={styles.linkWrapper}>
         {/* Preview Area */}
         <div className={styles.previewArea}>
           

@@ -182,7 +182,7 @@ export default function SplitPane() {
     if (!activeSnippet) return;
     const ownerUsername = user?.username || activeSnippet.ownerId;
     const snippetSlug = activeSnippet.slug || activeSnippet.id;
-    const url = `${window.location.origin}/${ownerUsername}/${snippetSlug}`;
+    const url = `${window.location.origin}/${ownerUsername}/snippets/${snippetSlug}`;
     navigator.clipboard.writeText(url).then(() => {
       setLiveToast('🔗 Link copied to clipboard!');
       setTimeout(() => setLiveToast(null), 2500);

@@ -209,8 +209,8 @@ export default function ComponentsPage() {
                   const isLarge = idx === 0;
                   const isTrending = (s.viewCount || 0) > 100;
                   const snippetUrl = s.ownerUsername
-                    ? `/${s.ownerUsername}/${s.slug || s.id}`
-                    : `/${s.ownerId}/${s.slug || s.id}`;
+                    ? `/${s.ownerUsername}/snippets/${s.slug || s.id}`
+                    : `/${s.ownerId}/snippets/${s.slug || s.id}`;
 
                   return (
                     <article

@@ -8,11 +8,13 @@ import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import AuthModal from './AuthModal';
 import CreateSnippetModal from './CreateSnippetModal';
 import { useSidebar } from '@/context/SidebarContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Sidebar() {
   const { snippets, activeSnippetId, setActiveSnippetId, createNewSnippet, deleteSnippet } = useSnippetContext();
   const { user, firebaseUser, initialized, logout } = useAuthStore();
   const { isOpen, closeMobile } = useSidebar();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -92,6 +94,12 @@ export default function Sidebar() {
         </nav>
 
         <div className={styles.userProfile}>
+          <a href="#" className={styles.settingsLink} onClick={(e) => { e.preventDefault(); toggleTheme(); }}>
+            <span className="material-symbols-outlined">
+              {theme === 'light' ? 'dark_mode' : 'light_mode'}
+            </span>
+            <span style={{ fontWeight: 500 }}>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+          </a>
           <a href="#" className={styles.settingsLink}>
             <span className="material-symbols-outlined">settings</span>
             <span style={{ fontWeight: 500 }}>Settings</span>

@@ -76,6 +76,22 @@
   gap: 1rem;
 }
 
+.themeToggleBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  padding: 0.25rem;
+}
+
+.themeToggleBtn:hover {
+  color: var(--primary);
+}
+
 /* Logged-in nav controls */
 .goToSnippetsBtn {
   display: flex;
