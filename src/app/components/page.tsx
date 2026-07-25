@@ -10,7 +10,7 @@ import styles from './Components.module.css';
 const CHIPS = ['All Components', 'HTML', 'CSS', 'JavaScript', 'React', 'Animation', 'Layout'];
 
 export default function ComponentsPage() {
-  const { user } = useAuthStore();
+  const { user, initialized } = useAuthStore();
   const router = useRouter();
 
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
@@ -97,8 +97,6 @@ export default function ComponentsPage() {
               <Link href="/" className={styles.navLink}>Explore</Link>
               <Link href="/components" className={styles.navLinkActive}>Components</Link>
             </div>
-          </div>
-          <div className={styles.navRight}>
             <div className={styles.searchBox}>
               <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
               <input
@@ -109,7 +107,11 @@ export default function ComponentsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            {user ? (
+          </div>
+          <div className={styles.navRight}>
+            {!initialized ? (
+              <div style={{ width: '120px', height: '40px', background: 'var(--surface-alt)', borderRadius: 'var(--radius-DEFAULT)', animation: 'pulse 1.5s infinite' }}></div>
+            ) : user ? (
               <>
                 <button
                   onClick={() => router.push(`/${user.username}`)}

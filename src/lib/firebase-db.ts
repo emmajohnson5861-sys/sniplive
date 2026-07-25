@@ -186,9 +186,13 @@ export async function createSnippet(data: {
 export async function getLiveSnippets(options?: { search?: string; limitSize?: number }): Promise<FirestoreSnippet[]> {
   const { search = '', limitSize = 50 } = options || {};
   const snippetsRef = collection(db, 'snippets');
-  const q = query(snippetsRef, where('isLive', '==', true), orderBy('createdAt', 'desc'), limit(limitSize));
+  const q = query(snippetsRef, where('isLive', '==', true));
   const snap = await getDocs(q);
   let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreSnippet));
+  
+  results.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+  results = results.slice(0, limitSize);
+  
   if (search) {
     const lower = search.toLowerCase();
     results = results.filter(s => s.title?.toLowerCase().includes(lower) || s.ownerName?.toLowerCase().includes(lower));
