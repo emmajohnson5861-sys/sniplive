@@ -10,6 +10,7 @@ export interface FirestoreUser {
   username?: string;
   email: string;
   name: string | null;
+  bio?: string | null;
   avatarUrl: string | null;
   role: 'SUBSCRIBER' | 'EDITOR' | 'ADMIN';
   isBanned: boolean;

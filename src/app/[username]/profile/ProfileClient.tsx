@@ -18,7 +18,7 @@ export default function UserProfilePage() {
   // Edit State
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
-  const [editBio, setEditBio] = useState('Full-stack Architect & Open Source Contributor.');
+  const [editBio, setEditBio] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -33,8 +33,11 @@ export default function UserProfilePage() {
       setLoading(true);
       try {
         const u = await getUserByUsernameOrId(username as string);
-        setUserProfile(u);
         if (u) {
+          setUserProfile(u);
+          setEditName(u.name || '');
+          setEditUsername(u.username || '');
+          setEditBio(u.bio || '');
           const isOwner = authUser?.id === u.id;
           let s: FirestoreSnippet[] = [];
           if (isOwner) {
@@ -43,8 +46,6 @@ export default function UserProfilePage() {
             s = await getPublicUserSnippets(u.id);
           }
           setSnippets(s);
-          setEditName(u.name || '');
-          setEditUsername(u.username || '');
         }
       } catch (err) {
         console.error(err);
@@ -80,11 +81,11 @@ export default function UserProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-    if (!firebaseUser || !userProfile || !isOwner) return;
+    if (!authUser || !userProfile || !isOwner) return;
     setIsSaving(true);
     try {
-      await updateUser(userProfile.id, { name: editName, username: editUsername });
-      setUserProfile({ ...userProfile, name: editName, username: editUsername });
+      await updateUser(userProfile.id, { name: editName, username: editUsername, bio: editBio });
+      setUserProfile({ ...userProfile, name: editName, username: editUsername, bio: editBio });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
@@ -232,8 +233,8 @@ export default function UserProfilePage() {
           </div>
         ) : (
           <div className={styles.formSection} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-             <h3 className={styles.avatarName} style={{ marginBottom: '1rem' }}>About {userProfile.name}</h3>
-             <p className={styles.headerDesc}>Full-stack Architect & Open Source Contributor.</p>
+             <h3 className={styles.avatarName} style={{ marginBottom: '1rem' }}>About {userProfile.name || userProfile.username}</h3>
+             <p className={styles.headerDesc}>{userProfile.bio || 'No bio provided yet.'}</p>
           </div>
         )}
       </div>
@@ -255,7 +256,12 @@ export default function UserProfilePage() {
           {snippets.map(snippet => {
             const isFavorited = authUser?.favoriteSnippets?.includes(snippet.id);
             const tagLabel = snippet.liveCategory || (snippet.js ? 'JS / Logic' : snippet.css ? 'CSS / Styling' : 'HTML / Structure');
-            const previewLines = snippet.js ? snippet.js.split('\n').slice(0, 5) : snippet.html ? snippet.html.split('\n').slice(0, 5) : snippet.css.split('\n').slice(0, 5);
+            const iframeSrc = `data:text/html;charset=utf-8,${encodeURIComponent(`
+              <html>
+                <head><style>body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: transparent; color: white; font-family: sans-serif; } ${snippet.css}</style></head>
+                <body>${snippet.html}<script>${snippet.js}</script></body>
+              </html>
+            `)}`;
 
             return (
               <div 
@@ -272,15 +278,20 @@ export default function UserProfilePage() {
                         onClick={(e) => handleToggleFavorite(e, snippet.id)}
                         title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
                       >
-                        <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorited ? "'FILL' 1" : "'FILL' 0" }}>
+                        <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorited ? "'FILL' 1" : "'FILL' 0", color: isFavorited ? 'var(--primary)' : 'inherit' }}>
                           favorite
                         </span>
                       </button>
                     )}
                   </div>
                   <h3 className={styles.cardTitle}>{snippet.title}</h3>
-                  <div className={styles.cardPreview}>
-                    <pre><code>{previewLines.join('\n')}</code></pre>
+                  <div className={styles.cardPreview} style={{ padding: 0, overflow: 'hidden', background: '#0a0a0a' }}>
+                    <iframe 
+                      src={iframeSrc}
+                      style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                      sandbox="allow-scripts"
+                      title={snippet.title}
+                    />
                   </div>
                 </div>
                 <div className={styles.cardFooter}>
@@ -307,27 +318,26 @@ export default function UserProfilePage() {
         <div className={styles.statCard}>
           <p className={styles.statLabel}>CONTRIBUTIONS</p>
           <p className={styles.statValueAlt} style={{ fontSize: '32px', fontFamily: 'var(--font-geist)', fontWeight: 600, margin: 0 }}>
-            {snippets.length * 3 + 12}
+            {snippets.length}
           </p>
-          <p className={styles.statTrend}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span> +12% this month
+          <p className={styles.statTrend} style={{ color: 'var(--text-secondary)' }}>
+            Total Snippets Created
           </p>
         </div>
         <div className={styles.statCard}>
-          <p className={styles.statLabel}>FORKS</p>
+          <p className={styles.statLabel}>TOTAL VIEWS</p>
           <p className={styles.statValueAlt} style={{ fontSize: '32px', fontFamily: 'var(--font-geist)', fontWeight: 600, margin: 0 }}>
-            {snippets.length * 2 + 5}
+            {snippets.reduce((acc, s) => acc + (s.viewCount || 0), 0)}
           </p>
-          <div style={{ display: 'flex', marginLeft: '0.5rem', marginTop: '1rem' }}>
-             <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--border-subtle)', marginLeft: '-0.5rem', border: '1px solid var(--surface)' }}></div>
-             <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary-container)', marginLeft: '-0.5rem', border: '1px solid var(--surface)' }}></div>
-          </div>
+          <p className={styles.statTrend} style={{ color: 'var(--text-secondary)' }}>
+            Across all snippets
+          </p>
         </div>
         <div className={styles.planCard}>
           <div>
             <p className={styles.planLabel}>CURRENT PLAN</p>
-            <h3 className={styles.planTitle}>{userProfile.role === 'SUBSCRIBER' ? 'Professional Tier' : `${userProfile.role} Tier`}</h3>
-            <p className={styles.planDesc}>Next billing on Dec 12, 2024</p>
+            <h3 className={styles.planTitle}>{userProfile.role === 'ADMIN' ? 'Admin Tier' : userProfile.role === 'EDITOR' ? 'Editor Tier' : 'Free Tier'}</h3>
+            <p className={styles.planDesc}>Since {userProfile.createdAt ? new Date(userProfile.createdAt.toMillis()).toLocaleDateString() : 'Unknown'}</p>
           </div>
           {isOwner && (
             <button className={styles.planBtn}>Manage</button>
