@@ -95,7 +95,7 @@ export default function Sidebar() {
                 router.push(`/${ownerId}/snippets/${snippet.slug || snippet.id}`);
                 closeMobile();
               }}
-              style={{ paddingLeft: '3rem' }}
+              style={{ paddingLeft: '1.5rem' }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>description</span>
               <div className={styles.snippetInfo}>
