@@ -12,6 +12,7 @@ interface AuthState {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateLocalUser: (data: Partial<FirestoreUser>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -68,6 +69,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     await signOutUser();
     set({ firebaseUser: null, user: null, loading: false });
   },
+
+  updateLocalUser: (data) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...data } : null
+    }));
+  }
 }));
 
 let initStarted = false;

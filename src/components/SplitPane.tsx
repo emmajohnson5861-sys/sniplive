@@ -233,8 +233,7 @@ export default function SplitPane() {
     }
   };
 
-  const firebaseUser = useAuthStore(state => state.firebaseUser);
-  const isFavorited = activeSnippet ? (firebaseUser?.favoriteSnippets?.includes(activeSnippet.id) || false) : false;
+  const isFavorited = activeSnippet ? (user?.favoriteSnippets?.includes(activeSnippet.id) || false) : false;
 
   if (!activeSnippet) {
     return (
@@ -304,10 +303,20 @@ export default function SplitPane() {
 
   const handleToggleFavorite = async () => {
     if (!user) return;
+    
+    // Optimistic UI update
+    const newFavorites = isFavorited 
+      ? (user.favoriteSnippets || []).filter(id => id !== activeSnippet.id)
+      : [...(user.favoriteSnippets || []), activeSnippet.id];
+      
+    useAuthStore.getState().updateLocalUser({ favoriteSnippets: newFavorites });
+
     try {
       await toggleFavoriteSnippet(user.id, activeSnippet.id, !isFavorited);
     } catch (e) {
       console.error(e);
+      // Revert on error
+      useAuthStore.getState().updateLocalUser({ favoriteSnippets: user.favoriteSnippets });
     }
   };
 

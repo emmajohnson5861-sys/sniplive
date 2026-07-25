@@ -211,7 +211,7 @@ export default function ComponentsPage() {
                   const snippetUrl = s.ownerUsername
                     ? `/${s.ownerUsername}/snippets/${s.slug || s.id}`
                     : `/${s.ownerId}/snippets/${s.slug || s.id}`;
-                  const isFavorited = firebaseUser?.favoriteSnippets?.includes(s.id);
+                  const isFavorited = user?.favoriteSnippets?.includes(s.id);
 
                   return (
                     <article
@@ -233,10 +233,18 @@ export default function ComponentsPage() {
                               title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
                               onClick={async (e) => {
                                 e.stopPropagation();
+                                
+                                const newFavorites = isFavorited 
+                                  ? (user.favoriteSnippets || []).filter(id => id !== s.id)
+                                  : [...(user.favoriteSnippets || []), s.id];
+                                
+                                useAuthStore.getState().updateLocalUser({ favoriteSnippets: newFavorites });
+
                                 try {
                                   await toggleFavoriteSnippet(user.id, s.id, !isFavorited);
                                 } catch (err) {
                                   console.error(err);
+                                  useAuthStore.getState().updateLocalUser({ favoriteSnippets: user.favoriteSnippets });
                                 }
                               }}
                               style={{ color: isFavorited ? 'var(--primary)' : 'inherit' }}

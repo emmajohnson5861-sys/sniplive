@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { getUserByUsernameOrId, getPublicUserSnippets, getUserSnippets, FirestoreUser, FirestoreSnippet, updateUser, toggleFavoriteSnippet } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import BannedUserView from '@/components/BannedUserView';
@@ -9,6 +9,7 @@ import styles from './ProfileClient.module.css';
 
 export default function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
   const { firebaseUser, user: authUser, initialized } = useAuthStore();
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
@@ -95,12 +96,22 @@ export default function UserProfilePage() {
 
   const handleToggleFavorite = async (e: React.MouseEvent, snippetId: string) => {
     e.stopPropagation();
-    if (!firebaseUser || !authUser) return;
-    const isFavorited = firebaseUser.favoriteSnippets?.includes(snippetId);
+    if (!authUser) return;
+    const isFavorited = authUser.favoriteSnippets?.includes(snippetId);
+    
+    // Optimistic UI update
+    const newFavorites = isFavorited 
+      ? (authUser.favoriteSnippets || []).filter(id => id !== snippetId)
+      : [...(authUser.favoriteSnippets || []), snippetId];
+    
+    useAuthStore.getState().updateLocalUser({ favoriteSnippets: newFavorites });
+
     try {
       await toggleFavoriteSnippet(authUser.id, snippetId, !isFavorited);
     } catch (err) {
       console.error(err);
+      // Revert on error
+      useAuthStore.getState().updateLocalUser({ favoriteSnippets: authUser.favoriteSnippets });
     }
   };
 
@@ -128,7 +139,16 @@ export default function UserProfilePage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2 className={styles.headerTitle}>{isOwner ? 'Profile Settings' : `${userProfile.name || userProfile.username}'s Profile`}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+          <button 
+            onClick={() => router.back()} 
+            title="Go back"
+            style={{ background: 'transparent', border: 'none', color: 'var(--on-surface-variant)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h2 className={styles.headerTitle} style={{ margin: 0 }}>{isOwner ? 'Profile Settings' : `${userProfile.name || userProfile.username}'s Profile`}</h2>
+        </div>
         <p className={styles.headerDesc}>{isOwner ? 'Manage your public profile and developer identity.' : 'View developer identity and code snippets.'}</p>
       </header>
 
@@ -233,7 +253,7 @@ export default function UserProfilePage() {
 
         <div className={styles.snippetGrid}>
           {snippets.map(snippet => {
-            const isFavorited = firebaseUser?.favoriteSnippets?.includes(snippet.id);
+            const isFavorited = authUser?.favoriteSnippets?.includes(snippet.id);
             const tagLabel = snippet.liveCategory || (snippet.js ? 'JS / Logic' : snippet.css ? 'CSS / Styling' : 'HTML / Structure');
             const previewLines = snippet.js ? snippet.js.split('\n').slice(0, 5) : snippet.html ? snippet.html.split('\n').slice(0, 5) : snippet.css.split('\n').slice(0, 5);
 
