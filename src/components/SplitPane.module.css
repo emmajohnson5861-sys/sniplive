@@ -200,14 +200,144 @@
   border-radius: 2px;
 }
 
-.emptyState {
+.emptyStateContainer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface-container-lowest);
+  height: 100%;
+}
+
+.emptyStateDecorations {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.decorationBox1 {
+  position: absolute;
+  top: 5rem;
+  left: 5rem;
+  border: 1px solid var(--border-subtle);
+  padding: 1rem;
+  border-radius: var(--radius-xl);
+  transform: rotate(6deg);
+}
+
+.decLine1 { width: 8rem; height: 0.5rem; background: var(--border-subtle); border-radius: 9999px; margin-bottom: 0.5rem; }
+.decLine2 { width: 6rem; height: 0.5rem; background: var(--border-subtle); border-radius: 9999px; margin-bottom: 0.5rem; opacity: 0.5; }
+.decLine3 { width: 7rem; height: 0.5rem; background: var(--border-subtle); border-radius: 9999px; }
+
+.decorationBox2 {
+  position: absolute;
+  bottom: 5rem;
+  right: 10rem;
+  border: 1px solid var(--border-subtle);
+  padding: 1rem;
+  border-radius: var(--radius-xl);
+  transform: rotate(-12deg);
+}
+
+.decDots { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.decDot1 { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--error); opacity: 0.4; }
+.decDot2 { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--success); opacity: 0.4; }
+.decDot3 { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--primary); opacity: 0.4; }
+
+.decLine4 { width: 10rem; height: 0.5rem; background: var(--border-subtle); border-radius: 9999px; margin-bottom: 0.5rem; }
+.decLine5 { width: 8rem; height: 0.5rem; background: var(--border-subtle); border-radius: 9999px; }
+
+.emptyStateCenter {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 28rem;
+  text-align: center;
+  z-index: 10;
+  padding: 0 1.5rem;
+}
+
+.emptyStateIconWell {
+  width: 6rem;
+  height: 6rem;
+  background-color: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 100%;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.emptyStateTitle {
+  font-family: var(--font-headline-md);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.emptyStateDesc {
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-family: var(--font-body-md);
+  line-height: 1.625;
+  margin-bottom: 2rem;
+}
+
+.emptyStateActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.newSnippetBtn {
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+  font-family: var(--font-button-text);
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: filter 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.newSnippetBtn:hover {
+  filter: brightness(1.1);
+}
+
+.emptyStateKeyboardHints {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  color: var(--text-secondary);
+  font-family: var(--font-label-sm);
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.hintGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kbdKey {
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background-color: var(--surface-container-highest);
+  border: 1px solid var(--border-subtle);
 }
 
 .mobileTabs {

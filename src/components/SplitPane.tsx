@@ -233,8 +233,64 @@ export default function SplitPane() {
 
   if (!activeSnippet) {
     return (
-      <div className={styles.emptyState}>
-        Select a snippet from the sidebar or create a new one.
+      <div className={styles.emptyStateContainer}>
+        {/* Contextual Decorative Elements */}
+        <div className={styles.emptyStateDecorations}>
+          <div className={styles.decorationBox1}>
+            <div className={styles.decLine1}></div>
+            <div className={styles.decLine2}></div>
+            <div className={styles.decLine3}></div>
+          </div>
+          <div className={styles.decorationBox2}>
+            <div className={styles.decDots}>
+              <div className={styles.decDot1}></div>
+              <div className={styles.decDot2}></div>
+              <div className={styles.decDot3}></div>
+            </div>
+            <div className={styles.decLine4}></div>
+            <div className={styles.decLine5}></div>
+          </div>
+        </div>
+        
+        {/* Centered Empty State Container */}
+        <div className={styles.emptyStateCenter}>
+          <div className={styles.emptyStateIconWell}>
+            <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--text-secondary)' }}>draft</span>
+          </div>
+          <h3 className={styles.emptyStateTitle}>No Snippet Selected</h3>
+          <p className={styles.emptyStateDesc}>
+            Select a snippet from the sidebar to view its contents, or create a new one to start building your collection.
+          </p>
+          <div className={styles.emptyStateActions}>
+            <button 
+              className={styles.newSnippetBtn}
+              onClick={() => {
+                if (user?.isBanned) {
+                  window.dispatchEvent(new CustomEvent('trigger-ban-shake'));
+                  return;
+                }
+                window.dispatchEvent(new CustomEvent('open-create-snippet'));
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span>
+              New Snippet
+            </button>
+          </div>
+        </div>
+
+        {/* Keyboard Shortcuts Footer (Contextual Hint) */}
+        <div className={styles.emptyStateKeyboardHints}>
+          <div className={styles.hintGroup}>
+            <span className={styles.kbdKey}>Ctrl</span>
+            <span className={styles.kbdKey}>N</span>
+            <span>to create new</span>
+          </div>
+          <div className={styles.hintGroup}>
+            <span className={styles.kbdKey}>Ctrl</span>
+            <span className={styles.kbdKey}>F</span>
+            <span>to search</span>
+          </div>
+        </div>
       </div>
     );
   }

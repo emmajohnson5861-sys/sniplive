@@ -22,6 +22,10 @@ export default function Sidebar() {
 
   useEffect(() => {
     initAuthListener();
+
+    const handleOpenCreateSnippet = () => setIsCreateModalOpen(true);
+    window.addEventListener('open-create-snippet', handleOpenCreateSnippet);
+    return () => window.removeEventListener('open-create-snippet', handleOpenCreateSnippet);
   }, []);
 
   const filteredSnippets = snippets.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
