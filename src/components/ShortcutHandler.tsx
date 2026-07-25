@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 export default function ShortcutHandler() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Create new snippet: Ctrl+N or Cmd+N
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+      // Create new snippet: Ctrl+N, Cmd+N, or Alt+N
+      if (((e.ctrlKey || e.metaKey) || e.altKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('open-create-snippet'));
       }
