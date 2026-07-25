@@ -4,6 +4,7 @@ import React from 'react';
 import styles from './Header.module.css';
 import { useAuthStore } from '@/store/auth-store';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useSidebar } from '@/context/SidebarContext';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -16,7 +17,11 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.leftSection}>
-        <h1 className={styles.logo}>SnipLive</h1>
+        <h1 className={styles.logo} onClick={() => router.push('/')}>SnipLive</h1>
+        <div className={styles.navLinks}>
+          <Link href="/" className={styles.navLink}>Explore</Link>
+          <Link href="/components" className={styles.navLink}>Components</Link>
+        </div>
         <div className={styles.searchContainer}>
           <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
           <input 
