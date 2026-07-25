@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSnippetById, incrementSnippetViewCount, FirestoreSnippet } from '@/lib/firebase-db';
+import { getSnippet, incrementSnippetView, FirestoreSnippet } from '@/lib/firebase-db';
 import { useAuthStore } from '@/store/auth-store';
 import styles from './page.module.css';
 
@@ -25,7 +25,7 @@ export default function SharedSnippetViewer() {
         // If there's no '-', the whole thing might be the ID.
         const id = shareSlug.split('-')[0];
 
-        const fetchedSnippet = await getSnippetById(id);
+        const fetchedSnippet = await getSnippet(id);
         if (!fetchedSnippet) {
           setError('Snippet not found.');
           setLoading(false);
@@ -44,7 +44,7 @@ export default function SharedSnippetViewer() {
         // Increment View Count (only once per session)
         if (!hasIncremented.current) {
           hasIncremented.current = true;
-          incrementSnippetViewCount(id).catch(console.error);
+          incrementSnippetView(id).catch(console.error);
         }
 
         setLoading(false);
