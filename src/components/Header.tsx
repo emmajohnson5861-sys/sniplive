@@ -8,7 +8,7 @@ import { useSidebar } from '@/context/SidebarContext';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function Header() {
-  const { user } = useAuthStore();
+  const { user, initialized } = useAuthStore();
   const { toggle: toggleSidebar } = useSidebar();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
@@ -36,7 +36,9 @@ export default function Header() {
         </button>
         <div className={styles.divider}></div>
         
-        {user ? (
+        {!initialized ? (
+          <div style={{ width: '120px', height: '40px', background: 'var(--surface-alt)', borderRadius: 'var(--radius-DEFAULT)', animation: 'pulse 1.5s infinite' }}></div>
+        ) : user ? (
           <div 
             className={styles.profileSection} 
             onClick={() => router.push(`/${user.username}/profile`)}
@@ -55,7 +57,7 @@ export default function Header() {
             )}
           </div>
         ) : (
-          <button className="btn-primary" style={{ padding: '0.4rem 1rem' }}>
+          <button className="btn-primary" style={{ padding: '0.4rem 1rem' }} onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: 'signin' }))}>
             Sign In
           </button>
         )}

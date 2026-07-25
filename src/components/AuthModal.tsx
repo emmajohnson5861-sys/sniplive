@@ -107,7 +107,8 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin', tit
             onChange={e => setPassword(e.target.value)}
             style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', background: 'var(--surface-container-highest)', color: 'var(--text-primary)' }}
           />
-          <button type="submit" className="bg-primary text-on-primary rounded" disabled={loading} style={{width: '100%', padding: '0.75rem', fontWeight: 600, transition: 'all 0.2s', opacity: loading ? 0.7 : 1}}>
+          <button type="submit" className="bg-primary text-on-primary rounded" disabled={loading} style={{width: '100%', padding: '0.75rem', fontWeight: 600, transition: 'all 0.2s', opacity: loading ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+            {loading && <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite' }}>progress_activity</span>}
             {loading ? 'Please wait...' : (authMode === 'signin' ? 'Sign In' : 'Sign Up')}
           </button>
         </form>

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import AuthModal from '@/components/AuthModal';
@@ -21,6 +21,7 @@ export default function LandingPage() {
   // Actually, usually a landing page redirects logged-in users to their dashboard.
   // I will keep the redirect, but also update the button to navigate to dashboard if clicked.
   useEffect(() => {
+    initAuthListener();
     if (initialized && firebaseUser && user?.username) {
       router.replace(`/${user.username}`);
     }
@@ -84,15 +85,13 @@ export default function LandingPage() {
                   )}
                 </div>
               </>
+            ) : !initialized ? (
+              <div style={{ width: '120px', height: '40px', background: 'var(--surface-alt)', borderRadius: 'var(--radius-DEFAULT)', animation: 'pulse 1.5s infinite' }}></div>
             ) : (
               /* Logged-out state */
               <>
-                <button className={styles.loginBtn} onClick={() => openAuth('signin')}>
-                  Log In
-                </button>
-                <button className={styles.signupBtn} onClick={() => openAuth('signup')}>
-                  Sign Up
-                </button>
+                <button className={styles.loginBtn} onClick={() => openAuth('signin')}>Sign in</button>
+                <button className={styles.signupBtn} onClick={() => openAuth('signup')}>Sign up</button>
               </>
             )}
           </div>

@@ -27,8 +27,17 @@ export default function Sidebar() {
     initAuthListener();
 
     const handleOpenCreateSnippet = () => setIsCreateModalOpen(true);
+    const handleOpenAuth = (e: any) => {
+      setAuthMode(e.detail || 'signin');
+      setIsAuthModalOpen(true);
+    };
+
     window.addEventListener('open-create-snippet', handleOpenCreateSnippet);
-    return () => window.removeEventListener('open-create-snippet', handleOpenCreateSnippet);
+    window.addEventListener('open-auth', handleOpenAuth);
+    return () => {
+      window.removeEventListener('open-create-snippet', handleOpenCreateSnippet);
+      window.removeEventListener('open-auth', handleOpenAuth);
+    };
   }, []);
 
   const filteredSnippets = snippets.filter(s => {
