@@ -15,6 +15,7 @@ export default function IDEPage() {
   const { snippets, activeSnippet, setActiveSnippetId, setExternalSnippet, loadedFromCloud } = useSnippetContext();
   const { user, initialized } = useAuthStore();
   const isInitialMount = useRef(true);
+  const targetUsername = params.username as string;
 
   // Sync from URL to state
   useEffect(() => {
@@ -24,27 +25,40 @@ export default function IDEPage() {
     if (currentSlug) {
       // Find snippet by slug or fallback to id
       const found = snippets.find(s => s.slug === currentSlug || s.id === currentSlug);
-      if (found && found.id !== activeSnippet?.id) {
-        setActiveSnippetId(found.id);
+      if (found) {
+        if (found.id !== activeSnippet?.id) {
+          setActiveSnippetId(found.id);
+        }
+      } else if (user && targetUsername === user.username) {
+        // Snippet not found in OUR snippets, and we are viewing OUR profile.
+        // It was either deleted or the slug is invalid.
+        // Redirect to empty state.
+        router.replace(`/${params.username}/snippets`);
       }
     } else if (snippets.length > 0 && !activeSnippet) {
       // No slug in URL, set default
       setActiveSnippetId(snippets[0].id);
     }
-  }, [params.slug, loadedFromCloud, snippets]);
+  }, [params.slug, loadedFromCloud, snippets, user, targetUsername, params.username, router]);
 
   // Sync from state to URL
   useEffect(() => {
-    if (activeSnippet && loadedFromCloud && params.username) {
+    if (!loadedFromCloud || !params.username) return;
+
+    if (activeSnippet) {
       const targetSlug = activeSnippet.slug || activeSnippet.id;
       const currentSlug = params.slug as string | undefined;
       
       if (currentSlug !== targetSlug) {
         router.replace(`/${params.username}/snippets/${targetSlug}`);
       }
+    } else if (snippets.length === 0) {
+      // If there are no snippets (e.g. last one was deleted), go to empty state
+      if (params.slug) {
+        router.replace(`/${params.username}/snippets`);
+      }
     }
-  }, [activeSnippet?.id, activeSnippet?.slug, loadedFromCloud]);
-  const targetUsername = params.username as string;
+  }, [activeSnippet?.id, activeSnippet?.slug, loadedFromCloud, snippets.length, params.slug, params.username, router]);
   const targetSlug = params.slug as string | undefined;
 
   useEffect(() => {
