@@ -39,6 +39,12 @@
   gap: 3rem;
   height: 100%;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.settingsContainer::-webkit-scrollbar {
+  display: none;
 }
 
 .section {
