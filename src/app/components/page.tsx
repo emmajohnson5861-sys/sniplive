@@ -187,7 +187,7 @@ export default function ComponentsPage() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authMode}
+        defaultMode={authMode}
       />
 
       {/* Main Content */}

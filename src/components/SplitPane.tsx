@@ -33,8 +33,7 @@ export default function SplitPane() {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [jsCode, setJsCode] = useState('');
-  const [reactCode, setReactCode] = useState('');
-  const lastSavedCloud = useRef({ id: '', html: '', css: '', js: '', react: '' });
+  const lastSavedCloud = useRef({ id: '', html: '', css: '', js: '' });
 
   useEffect(() => {
     if (activeSnippet) {
@@ -45,8 +44,7 @@ export default function SplitPane() {
         setHtmlCode(activeSnippet.html);
         setCssCode(activeSnippet.css);
         setJsCode(activeSnippet.js);
-        setReactCode(activeSnippet.react || '');
-        lastSavedCloud.current = { id: activeSnippet.id, html: activeSnippet.html, css: activeSnippet.css, js: activeSnippet.js, react: activeSnippet.react || '' };
+        lastSavedCloud.current = { id: activeSnippet.id, html: activeSnippet.html, css: activeSnippet.css, js: activeSnippet.js };
         setIsSaved(true);
       } else {
         const oldCloud = { ...lastSavedCloud.current };
@@ -62,18 +60,13 @@ export default function SplitPane() {
           setJsCode(prev => prev === oldCloud.js ? activeSnippet.js : prev);
           lastSavedCloud.current.js = activeSnippet.js;
         }
-        if ((activeSnippet.react || '') !== oldCloud.react) {
-          setReactCode(prev => prev === oldCloud.react ? (activeSnippet.react || '') : prev);
-          lastSavedCloud.current.react = activeSnippet.react || '';
-        }
       }
     } else {
       setHtmlCode('');
       setCssCode('');
       setJsCode('');
-      setReactCode('');
       setTitle('Untitled Snippet');
-      lastSavedCloud.current = { id: '', html: '', css: '', js: '', react: '' };
+      lastSavedCloud.current = { id: '', html: '', css: '', js: '' };
     }
   }, [activeSnippet]);
 
@@ -83,23 +76,22 @@ export default function SplitPane() {
     if (!activeSnippet || !autoSave) return;
     
     // Check if there are actual changes
-    if (htmlCode !== activeSnippet.html || cssCode !== activeSnippet.css || jsCode !== activeSnippet.js || reactCode !== (activeSnippet.react || '')) {
+    if (htmlCode !== activeSnippet.html || cssCode !== activeSnippet.css || jsCode !== activeSnippet.js) {
       const timeout = setTimeout(() => {
         saveSnippet({
           ...activeSnippet,
           html: htmlCode,
           css: cssCode,
           js: jsCode,
-          react: reactCode,
         });
-        lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode, react: reactCode };
+        lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode };
         setIsSaved(true);
       }, 2000); // 2 second autosave debounce
       
       setIsSaved(false);
       return () => clearTimeout(timeout);
     }
-  }, [htmlCode, cssCode, jsCode, reactCode, activeSnippet, saveSnippet]);
+  }, [htmlCode, cssCode, jsCode, activeSnippet, saveSnippet]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -172,8 +164,8 @@ export default function SplitPane() {
 
   const handleSave = () => {
     if (activeSnippet) {
-      saveSnippet({ ...activeSnippet, title, html: htmlCode, css: cssCode, js: jsCode, react: reactCode });
-      lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode, react: reactCode };
+      saveSnippet({ ...activeSnippet, title, html: htmlCode, css: cssCode, js: jsCode });
+      lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode };
       setIsSaved(true);
     }
   };

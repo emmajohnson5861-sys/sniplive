@@ -18,12 +18,10 @@ interface CodeEditorProps {
   setCss: (val: string) => void;
   js: string;
   setJs: (val: string) => void;
-  react?: string;
-  setReact?: (val: string) => void;
   readOnly?: boolean;
 }
 
-type TabType = 'html' | 'css' | 'js' | 'react';
+type TabType = 'html' | 'css' | 'js';
 
 const jsCompletions = [
   // Document
@@ -613,7 +611,7 @@ function jsCompletionSource(context: CompletionContext): CompletionResult | null
   };
 }
 
-export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, react = '', setReact, readOnly = false }: CodeEditorProps) {
+export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, readOnly = false }: CodeEditorProps) {
   const [activeTab, setActiveTab] = useState<TabType>('html');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -658,13 +656,6 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, reac
           onClick={() => setActiveTab('js')}
         >
           script.js
-        </button>
-        <button 
-          className={`${styles.tab} ${styles.tabReact} ${activeTab === 'react' ? styles.active : ''}`}
-          onClick={() => setActiveTab('react')}
-          title="Write and preview React JSX components"
-        >
-          <span style={{ fontSize: '11px' }}>⚛</span> App.jsx
         </button>
       </div>
 
@@ -712,23 +703,6 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, reac
             className={styles.cmWrapper}
             readOnly={readOnly}
             editable={!readOnly}
-          />
-        )}
-        {activeTab === 'react' && (
-          <CodeMirror
-            value={react}
-            height="100%"
-            theme={oneDark}
-            extensions={[
-              javascript({ jsx: true, typescript: true }),
-              javascriptLanguage.data.of({ autocomplete: jsCompletionSource }),
-            ]}
-            basicSetup={basicSetup}
-            style={editorStyle}
-            onChange={(value) => setReact && setReact(value)}
-            className={styles.cmWrapper}
-            readOnly={readOnly || !setReact}
-            editable={!readOnly && !!setReact}
           />
         )}
       </div>
