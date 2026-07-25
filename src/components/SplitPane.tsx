@@ -7,7 +7,7 @@ import LivePreview from './LivePreview';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
 import { useSettingsStore } from '@/store/settings-store';
-import { updateSnippet } from '@/lib/firebase-db';
+import { updateSnippet, toggleFavoriteSnippet } from '@/lib/firebase-db';
 import GoLiveModal, { GoLiveData } from './GoLiveModal';
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), { ssr: false });
@@ -298,6 +298,17 @@ export default function SplitPane() {
   }
 
   const isOwner = user?.id === activeSnippet.ownerId;
+  const firebaseUser = useAuthStore(state => state.firebaseUser);
+  const isFavorited = firebaseUser?.favoriteSnippets?.includes(activeSnippet.id) || false;
+
+  const handleToggleFavorite = async () => {
+    if (!user) return;
+    try {
+      await toggleFavoriteSnippet(user.id, activeSnippet.id, !isFavorited);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <>
@@ -338,6 +349,19 @@ export default function SplitPane() {
         </div>
         <div className={styles.editorHeaderRight}>
           {!isSaved && <p className={styles.saveStatus}>Unsaved changes</p>}
+          {/* Favorite Toggle */}
+          {user && (
+            <button
+              onClick={handleToggleFavorite}
+              title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+              className={styles.headerIconBtn}
+              style={{ color: isFavorited ? 'var(--primary)' : 'inherit' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: isFavorited ? "'FILL' 1" : "'FILL' 0" }}>
+                favorite
+              </span>
+            </button>
+          )}
           {/* Share button — visible to owner and for public/unlisted snippets */}
           {(isOwner || visibility !== 'private') && (
             <button

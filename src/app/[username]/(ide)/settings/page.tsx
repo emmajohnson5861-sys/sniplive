@@ -19,7 +19,14 @@ export default function EditorSettingsPage() {
   } = useSettingsStore();
 
   return (
-    <>
+    <div className={styles.settingsContainer}>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.headerTitle}>Editor Settings</h1>
+        <button className={styles.saveBtn} onClick={() => alert('Settings saved locally!')}>
+          Save Changes
+        </button>
+      </div>
+
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Editor Appearance</h2>
@@ -217,6 +224,6 @@ export default function EditorSettingsPage() {
         </div>
         <p className={styles.previewCaption}>Live preview of current font and theme settings.</p>
       </section>
-    </>
+    </div>
   );
 }

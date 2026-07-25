@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
-import { getLiveSnippets, FirestoreSnippet } from '@/lib/firebase-db';
+import { getLiveSnippets, FirestoreSnippet, toggleFavoriteSnippet } from '@/lib/firebase-db';
 import styles from './Components.module.css';
 
 const CHIPS = ['All Components', 'HTML', 'CSS', 'JavaScript', 'React', 'Animation', 'Layout'];
@@ -211,6 +211,7 @@ export default function ComponentsPage() {
                   const snippetUrl = s.ownerUsername
                     ? `/${s.ownerUsername}/snippets/${s.slug || s.id}`
                     : `/${s.ownerId}/snippets/${s.slug || s.id}`;
+                  const isFavorited = firebaseUser?.favoriteSnippets?.includes(s.id);
 
                   return (
                     <article
@@ -226,6 +227,25 @@ export default function ComponentsPage() {
                           <h2 className={styles.cardTitle}>{s.liveTitle || s.title}</h2>
                         </div>
                         <div className={styles.cardActions}>
+                          {user && (
+                            <button
+                              className={styles.cardActionBtn}
+                              title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await toggleFavoriteSnippet(user.id, s.id, !isFavorited);
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }}
+                              style={{ color: isFavorited ? 'var(--primary)' : 'inherit' }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorited ? "'FILL' 1" : "'FILL' 0" }}>
+                                favorite
+                              </span>
+                            </button>
+                          )}
                           <button
                             className={styles.cardActionBtn}
                             title="Copy code"

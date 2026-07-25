@@ -17,6 +17,7 @@ export interface FirestoreUser {
   storageUsage: number;
   lastActiveAt: Timestamp | null;
   createdAt: Timestamp | null;
+  favoriteSnippets: string[];
 }
 
 export interface FirestoreSnippet {

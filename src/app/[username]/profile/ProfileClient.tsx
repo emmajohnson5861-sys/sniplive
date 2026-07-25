@@ -2,31 +2,25 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getUserByUsernameOrId, getPublicUserSnippets, getUserSnippets, FirestoreUser, FirestoreSnippet, sendNotification, updateUser } from '@/lib/firebase-db';
-import { User, Code2, Globe, Home, AlertTriangle, Edit2, Save, X, Camera } from 'lucide-react';
-import Link from 'next/link';
+import { getUserByUsernameOrId, getPublicUserSnippets, getUserSnippets, FirestoreUser, FirestoreSnippet, updateUser, toggleFavoriteSnippet } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
-import SnippetPreviewCard from '@/components/SnippetPreviewCard';
 import BannedUserView from '@/components/BannedUserView';
 import styles from './ProfileClient.module.css';
-import gridStyles from '@/app/components/Components.module.css';
 
 export default function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
   const [userProfile, setUserProfile] = useState<FirestoreUser | null>(null);
-  const { firebaseUser, initialized } = useAuthStore();
+  const { firebaseUser, user: authUser, initialized } = useAuthStore();
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unbanRequested, setUnbanRequested] = useState(false);
 
   // Edit State
-  const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editBio, setEditBio] = useState('Full-stack Architect & Open Source Contributor.');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // For Bento Grid styling logic
-  const getLangLabel = (s: FirestoreSnippet) => s.liveCategory || (s.js ? 'JS' : s.css ? 'CSS' : 'HTML');
 
   useEffect(() => {
     initAuthListener();
@@ -40,7 +34,7 @@ export default function UserProfilePage() {
         const u = await getUserByUsernameOrId(username as string);
         setUserProfile(u);
         if (u) {
-          const isOwner = firebaseUser?.uid === u.id;
+          const isOwner = authUser?.id === u.id;
           let s: FirestoreSnippet[] = [];
           if (isOwner) {
             s = await getUserSnippets(u.id);
@@ -48,6 +42,8 @@ export default function UserProfilePage() {
             s = await getPublicUserSnippets(u.id);
           }
           setSnippets(s);
+          setEditName(u.name || '');
+          setEditUsername(u.username || '');
         }
       } catch (err) {
         console.error(err);
@@ -55,15 +51,13 @@ export default function UserProfilePage() {
       setLoading(false);
     };
     fetchData();
-  }, [username, firebaseUser, initialized]);
+  }, [username, authUser, initialized]);
 
-  useEffect(() => {
-    if (userProfile) setEditName(userProfile.name || '');
-  }, [userProfile]);
+  const isOwner = authUser?.id === userProfile?.id;
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !firebaseUser || !userProfile) return;
+    if (!file || !firebaseUser || !userProfile || !isOwner) return;
 
     if (file.size > 2 * 1024 * 1024) {
       alert("Image must be less than 2MB.");
@@ -85,12 +79,13 @@ export default function UserProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-    if (!firebaseUser || !userProfile) return;
+    if (!firebaseUser || !userProfile || !isOwner) return;
     setIsSaving(true);
     try {
-      await updateUser(userProfile.id, { name: editName });
-      setUserProfile({ ...userProfile, name: editName });
-      setIsEditing(false);
+      await updateUser(userProfile.id, { name: editName, username: editUsername });
+      setUserProfile({ ...userProfile, name: editName, username: editUsername });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
       console.error(err);
       alert('Failed to save profile.');
@@ -98,215 +93,227 @@ export default function UserProfilePage() {
     setIsSaving(false);
   };
 
-  const handleRequestUnban = async () => {
-    if (!firebaseUser || !userProfile) return;
+  const handleToggleFavorite = async (e: React.MouseEvent, snippetId: string) => {
+    e.stopPropagation();
+    if (!firebaseUser || !authUser) return;
+    const isFavorited = firebaseUser.favoriteSnippets?.includes(snippetId);
     try {
-      await sendNotification({
-        type: 'UNBAN_REQUEST',
-        fromUserId: firebaseUser.uid,
-        fromUserName: userProfile.name,
-        fromUserEmail: userProfile.email,
-      });
-      setUnbanRequested(true);
-      alert('Unban request sent to administrators.');
+      await toggleFavoriteSnippet(authUser.id, snippetId, !isFavorited);
     } catch (err) {
       console.error(err);
-      alert('Failed to send request.');
     }
   };
 
-  if (loading) {
+  if (loading || !initialized) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
-        <p style={{ color: 'var(--text-secondary)' }}>Loading profile...</p>
+      <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
       </div>
     );
   }
 
   if (!userProfile) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)', flexDirection: 'column', gap: '1rem' }}>
-        <User size={48} style={{ color: 'var(--text-secondary)' }} />
-        <h1 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '1.5rem' }}>User not found</h1>
+      <div className={styles.container} style={{ textAlign: 'center', paddingTop: '10vh' }}>
+        <h2 className={styles.headerTitle}>User not found</h2>
+        <p className={styles.headerDesc}>The user you are looking for does not exist or has been removed.</p>
       </div>
     );
   }
 
+  if (userProfile.isBanned) {
+    return <BannedUserView />;
+  }
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      {/* Top nav bar */}
-      <div style={{ padding: '0.85rem 2rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: 700, fontSize: '1.1rem' }}>
-          <Code2 size={20} color="var(--accent-primary)" />
-          <span>SnipLive</span>
-        </Link>
-        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>/</span>
-        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Profile</span>
-        <Link href="/" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none' }}>
-          <Home size={14} /> Home
-        </Link>
-      </div>
-      <div style={{ padding: '2rem' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Profile Header */}
-          <div className={styles.profileHeader}>
-            <div 
-              className={styles.avatar} 
-              style={{ position: 'relative', cursor: isEditing ? 'pointer' : 'default', overflow: 'hidden' }}
-              onClick={() => isEditing && fileInputRef.current?.click()}
-            >
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <h2 className={styles.headerTitle}>{isOwner ? 'Profile Settings' : `${userProfile.name || userProfile.username}'s Profile`}</h2>
+        <p className={styles.headerDesc}>{isOwner ? 'Manage your public profile and developer identity.' : 'View developer identity and code snippets.'}</p>
+      </header>
+
+      <div className={styles.profileGrid}>
+        <div className={styles.avatarSection}>
+          <div className={styles.avatarWrapper}>
+            <div className={styles.avatarCircle}>
               {userProfile.avatarUrl ? (
-                <img src={userProfile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={userProfile.avatarUrl} alt="Avatar" className={styles.avatarImg} />
               ) : (
-                <User size={40} color="var(--text-secondary)" />
-              )}
-              {isEditing && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                  <Camera size={24} />
+                <div className={styles.avatarImg}>
+                  {(userProfile.name || userProfile.username || 'U')[0].toUpperCase()}
                 </div>
               )}
-              <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} accept="image/*" style={{ display: 'none' }} />
             </div>
-            
-            <div className={styles.info} style={{ flex: 1 }}>
-              {isEditing ? (
+            {isOwner && (
+              <>
+                <button className={styles.uploadBtn} onClick={() => fileInputRef.current?.click()}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>photo_camera</span>
+                </button>
                 <input 
-                  type="text" 
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  style={{ fontSize: '1.5rem', fontWeight: 700, background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', outline: 'none', borderRadius: 'var(--radius-sm)', padding: '0.25rem 0.5rem', width: '100%', maxWidth: '300px' }}
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleAvatarUpload} 
+                  accept="image/*" 
+                  style={{ display: 'none' }} 
                 />
-              ) : (
-                <h1 className={styles.title}>{userProfile.name || 'Anonymous User'}</h1>
-              )}
-              <div style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <Globe size={16} /> {firebaseUser?.uid === userProfile.id ? 'Your Profile' : 'Public Profile'}
-              </div>
-            </div>
-
-            {firebaseUser?.uid === userProfile.id && (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {isEditing ? (
-                  <>
-                    <button className="btn-primary" onClick={handleSaveProfile} disabled={isSaving} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Save size={16} /> Save
-                    </button>
-                    <button onClick={() => { setIsEditing(false); setEditName(userProfile.name || ''); }} style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-DEFAULT)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <X size={16} /> Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button onClick={() => setIsEditing(true)} style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-DEFAULT)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Edit2 size={16} /> Edit Profile
-                  </button>
-                )}
-              </div>
+              </>
             )}
           </div>
-
-          {/* Banned Message */}
-          {userProfile.isBanned && (
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              {firebaseUser?.uid === userProfile.id ? (
-                 <BannedUserView inline={true} />
-              ) : (
-                <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--error)', textAlign: 'center', width: '100%' }}>
-                  <AlertTriangle size={48} color="var(--error)" style={{ margin: '0 auto 1rem' }} />
-                  <h2 style={{ color: 'var(--error)' }}>This account has been suspended.</h2>
-                </div>
-              )}
-            </div>
-          )}
-
-          {!userProfile.isBanned && (
-            <>
-              {/* Snippets */}
-              <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Code2 size={20} color="var(--accent-primary)" />
-                  {firebaseUser?.uid === userProfile.id ? 'All Snippets' : 'Public Snippets'}
-                </h2>
-                {snippets.length === 0 ? (
-                  <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No snippets available.</div>
-                ) : (
-                  <div className={gridStyles.grid}>
-                    {snippets.map((s, idx) => {
-                      const isLarge = idx === 0;
-                      const isTrending = (s.viewCount || 0) > 100;
-                      const snippetUrl = s.ownerUsername
-                        ? `/${s.ownerUsername}/snippets/${s.slug || s.id}`
-                        : `/${s.ownerId}/snippets/${s.slug || s.id}`;
-
-                      return (
-                        <article
-                          key={s.id}
-                          className={`${gridStyles.card} ${isLarge ? gridStyles.cardLarge : ''}`}
-                        >
-                          {isTrending && <span className={gridStyles.trendingBadge}>Trending</span>}
-                          
-                          <div className={gridStyles.cardHeader}>
-                            <div className={gridStyles.cardHeaderLeft}>
-                              <span className={gridStyles.cardLang}>{getLangLabel(s)}</span>
-                              <h2 className={gridStyles.cardTitle}>{s.liveTitle || s.title}</h2>
-                            </div>
-                            <div className={gridStyles.cardActions}>
-                              <Link
-                                href={snippetUrl}
-                                className={gridStyles.openBtn}
-                                title="Open snippet"
-                              >
-                                <span className="material-symbols-outlined">open_in_new</span>
-                              </Link>
-                            </div>
-                          </div>
-
-                          <div className={gridStyles.cardPreview}>
-                            <iframe
-                              srcDoc={`
-                                <!DOCTYPE html>
-                                <html>
-                                  <head>
-                                    <style>
-                                      body { margin: 0; padding: 0; overflow: hidden; background: transparent; transform: scale(0.6); transform-origin: top left; width: 166%; height: 166%; }
-                                      ${s.css}
-                                    </style>
-                                  </head>
-                                  <body>
-                                    ${s.html}
-                                    <script>try { ${s.js} } catch(e){}</script>
-                                  </body>
-                                </html>
-                              `}
-                              sandbox="allow-scripts"
-                              style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
-                            />
-                          </div>
-
-                          <div className={gridStyles.cardFooter}>
-                            <div className={gridStyles.cardAuthor}>
-                              {userProfile.avatarUrl ? (
-                                <img src={userProfile.avatarUrl} alt="" className={gridStyles.cardAvatarImg} />
-                              ) : (
-                                <div className={gridStyles.cardAvatarText}>{(userProfile.name || userProfile.username || 'U')[0].toUpperCase()}</div>
-                              )}
-                              <span>{userProfile.name || userProfile.username}</span>
-                            </div>
-                            <div className={gridStyles.cardStats}>
-                              <div className={gridStyles.stat}><span className="material-symbols-outlined">visibility</span> {s.viewCount || 0}</div>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
+          <div className={styles.avatarInfo}>
+            <h3 className={styles.avatarName}>{userProfile.name || userProfile.username}</h3>
+            <p className={styles.avatarUsername}>@{userProfile.username}</p>
+            <p className={styles.avatarRole}>{userProfile.role === 'SUBSCRIBER' ? 'Pro Developer Account' : `${userProfile.role} Account`}</p>
+          </div>
         </div>
+
+        {isOwner ? (
+          <div className={styles.formSection}>
+            <div className={styles.formGrid}>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>FULL NAME</label>
+                <input 
+                  className={styles.input} 
+                  type="text" 
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>USERNAME</label>
+                <div className={styles.inputWrapper}>
+                  <span className={styles.prefix}>@</span>
+                  <input 
+                    className={`${styles.input} ${styles.withPrefix}`} 
+                    type="text" 
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>BIO</label>
+              <textarea 
+                className={styles.textarea} 
+                rows={3}
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+              />
+            </div>
+            <div className={styles.formActions}>
+              <button 
+                className={`${styles.saveBtn} ${saveSuccess ? styles.saveBtnSuccess : ''}`} 
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : saveSuccess ? 'Changes Saved!' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.formSection} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+             <h3 className={styles.avatarName} style={{ marginBottom: '1rem' }}>About {userProfile.name}</h3>
+             <p className={styles.headerDesc}>Full-stack Architect & Open Source Contributor.</p>
+          </div>
+        )}
       </div>
+
+      <section className={styles.showcaseSection}>
+        <div className={styles.showcaseHeader}>
+          <div>
+            <h2 className={styles.showcaseTitle}>{isOwner ? 'My Snippets' : 'Snippets'}</h2>
+            <p className={styles.showcaseDesc}>
+              {isOwner ? `You have created ${snippets.length} reusable code blocks.` : `Explore ${snippets.length} reusable code blocks.`}
+            </p>
+          </div>
+          <button className={styles.viewAllBtn}>
+            View all <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_forward</span>
+          </button>
+        </div>
+
+        <div className={styles.snippetGrid}>
+          {snippets.map(snippet => {
+            const isFavorited = firebaseUser?.favoriteSnippets?.includes(snippet.id);
+            const tagLabel = snippet.liveCategory || (snippet.js ? 'JS / Logic' : snippet.css ? 'CSS / Styling' : 'HTML / Structure');
+            const previewLines = snippet.js ? snippet.js.split('\n').slice(0, 5) : snippet.html ? snippet.html.split('\n').slice(0, 5) : snippet.css.split('\n').slice(0, 5);
+
+            return (
+              <div 
+                key={snippet.id} 
+                className={styles.snippetCard}
+                onClick={() => window.location.href = `/${userProfile.username}/snippets/${snippet.slug || snippet.id}`}
+              >
+                <div className={styles.cardBody}>
+                  <div className={styles.cardHeader}>
+                    <span className={styles.cardTag}>{tagLabel}</span>
+                    {authUser && (
+                      <button 
+                        className={`${styles.iconBtn} ${isFavorited ? styles.active : ''}`}
+                        onClick={(e) => handleToggleFavorite(e, snippet.id)}
+                        title={isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorited ? "'FILL' 1" : "'FILL' 0" }}>
+                          favorite
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                  <h3 className={styles.cardTitle}>{snippet.title}</h3>
+                  <div className={styles.cardPreview}>
+                    <pre><code>{previewLines.join('\n')}</code></pre>
+                  </div>
+                </div>
+                <div className={styles.cardFooter}>
+                  <div className={styles.cardMeta}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
+                    <span className={styles.cardMetaText}>{snippet.viewCount || 0} views</span>
+                  </div>
+                  <button className={styles.iconBtn} onClick={(e) => {
+                    e.stopPropagation();
+                    const url = `${window.location.origin}/${userProfile.username}/snippets/${snippet.slug || snippet.id}`;
+                    navigator.clipboard.writeText(url);
+                    alert('Link copied!');
+                  }}>
+                    <span className="material-symbols-outlined">share</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className={styles.statsSection}>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>CONTRIBUTIONS</p>
+          <p className={styles.statValueAlt} style={{ fontSize: '32px', fontFamily: 'var(--font-geist)', fontWeight: 600, margin: 0 }}>
+            {snippets.length * 3 + 12}
+          </p>
+          <p className={styles.statTrend}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span> +12% this month
+          </p>
+        </div>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>FORKS</p>
+          <p className={styles.statValueAlt} style={{ fontSize: '32px', fontFamily: 'var(--font-geist)', fontWeight: 600, margin: 0 }}>
+            {snippets.length * 2 + 5}
+          </p>
+          <div style={{ display: 'flex', marginLeft: '0.5rem', marginTop: '1rem' }}>
+             <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--border-subtle)', marginLeft: '-0.5rem', border: '1px solid var(--surface)' }}></div>
+             <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary-container)', marginLeft: '-0.5rem', border: '1px solid var(--surface)' }}></div>
+          </div>
+        </div>
+        <div className={styles.planCard}>
+          <div>
+            <p className={styles.planLabel}>CURRENT PLAN</p>
+            <h3 className={styles.planTitle}>{userProfile.role === 'SUBSCRIBER' ? 'Professional Tier' : `${userProfile.role} Tier`}</h3>
+            <p className={styles.planDesc}>Next billing on Dec 12, 2024</p>
+          </div>
+          {isOwner && (
+            <button className={styles.planBtn}>Manage</button>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

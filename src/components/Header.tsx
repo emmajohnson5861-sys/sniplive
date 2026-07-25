@@ -3,6 +3,7 @@
 import React from 'react';
 import styles from './Header.module.css';
 import { useAuthStore } from '@/store/auth-store';
+import { useRouter } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -10,6 +11,7 @@ export default function Header() {
   const { user } = useAuthStore();
   const { toggle: toggleSidebar } = useSidebar();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
 
   return (
     <header className={styles.header}>
@@ -34,7 +36,11 @@ export default function Header() {
         <div className={styles.divider}></div>
         
         {user ? (
-          <div className={styles.profileSection}>
+          <div 
+            className={styles.profileSection} 
+            onClick={() => router.push(`/${user.username}/profile`)}
+            style={{ cursor: 'pointer' }}
+          >
             <div className={styles.profileInfo}>
               <p className={styles.profileName}>{user.name || user.username}</p>
               <p className={styles.profileEmail}>{user.email || `@${user.username}`}</p>

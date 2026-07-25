@@ -21,6 +21,7 @@ export default function Sidebar() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'favorites'>('all');
 
   useEffect(() => {
     initAuthListener();
@@ -30,7 +31,11 @@ export default function Sidebar() {
     return () => window.removeEventListener('open-create-snippet', handleOpenCreateSnippet);
   }, []);
 
-  const filteredSnippets = snippets.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSnippets = snippets.filter(s => {
+    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filter === 'all' || firebaseUser?.favoriteSnippets?.includes(s.id);
+    return matchesSearch && matchesFilter;
+  });
 
   const handleCreateSnippet = (title: string) => {
     if (user?.isBanned) {
@@ -59,9 +64,19 @@ export default function Sidebar() {
         </div>
 
         <nav className={styles.navLinks}>
-          <div className={styles.snippetItem}>
+          <div 
+            className={`${styles.snippetItem} ${filter === 'all' ? styles.active : ''}`}
+            onClick={() => setFilter('all')}
+          >
             <span className="material-symbols-outlined">code_blocks</span>
             <span style={{ fontWeight: 500, flex: 1 }}>All Snippets</span>
+          </div>
+          <div 
+            className={`${styles.snippetItem} ${filter === 'favorites' ? styles.active : ''}`}
+            onClick={() => setFilter('favorites')}
+          >
+            <span className="material-symbols-outlined">favorite</span>
+            <span style={{ fontWeight: 500, flex: 1 }}>Favorites</span>
           </div>
 
           {filteredSnippets.map(snippet => (
@@ -104,6 +119,12 @@ export default function Sidebar() {
             <a href={`/${user.username}/settings`} className={styles.settingsLink} onClick={(e) => { e.preventDefault(); router.push(`/${user.username}/settings`); closeMobile(); }}>
               <span className="material-symbols-outlined">settings</span>
               <span style={{ fontWeight: 500 }}>Settings</span>
+            </a>
+          )}
+          {initialized && user && (
+            <a href={`/${user.username}/profile`} className={styles.settingsLink} onClick={(e) => { e.preventDefault(); router.push(`/${user.username}/profile`); closeMobile(); }}>
+              <span className="material-symbols-outlined">person</span>
+              <span style={{ fontWeight: 500 }}>Profile</span>
             </a>
           )}
           

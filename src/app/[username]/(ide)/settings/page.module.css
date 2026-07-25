@@ -1,3 +1,45 @@
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 0;
+}
+
+.headerTitle {
+  font-family: var(--font-geist);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.saveBtn {
+  background-color: var(--primary);
+  color: var(--surface);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.saveBtn:active {
+  transform: scale(0.95);
+}
+
+.settingsContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
 .section {
   display: flex;
   flex-direction: column;
