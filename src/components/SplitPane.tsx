@@ -449,7 +449,6 @@ export default function SplitPane() {
               html={htmlCode} setHtml={setHtmlCode}
               css={cssCode} setCss={setCssCode}
               js={jsCode} setJs={setJsCode}
-              react={reactCode} setReact={setReactCode}
             />
           </div>
         )}
