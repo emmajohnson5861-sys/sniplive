@@ -469,7 +469,7 @@ export default function SplitPane() {
             style={{ width: isMobile ? '100%' : `${100 - leftWidth}%` }}
           >
             <div style={{ width: '100%', height: '100%', pointerEvents: isDragging ? 'none' : 'auto', position: 'relative' }}>
-              <LivePreview html={htmlCode} css={cssCode} js={jsCode} react={reactCode} />
+              <LivePreview html={htmlCode} css={cssCode} js={jsCode} />
             </div>
           </div>
         )}
