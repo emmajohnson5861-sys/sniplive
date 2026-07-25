@@ -119,9 +119,11 @@ export default function LandingPage() {
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
               </button>
               
-              <Link href="/sandbox" className={styles.secondaryHeroBtn}>
-                Try Sandbox (No Login)
-              </Link>
+              {(!initialized || !user) && (
+                <Link href="/sandbox" className={styles.secondaryHeroBtn}>
+                  Try Sandbox (No Login)
+                </Link>
+              )}
             </div>
           </div>
           
