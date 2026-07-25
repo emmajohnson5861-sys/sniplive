@@ -5,13 +5,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { getLiveSnippets, FirestoreSnippet, toggleFavoriteSnippet } from '@/lib/firebase-db';
+import { useTheme } from '@/context/ThemeContext';
+import AuthModal from '@/components/AuthModal';
 import styles from './Components.module.css';
 
 const CHIPS = ['All Components', 'HTML', 'CSS', 'JavaScript', 'React', 'Animation', 'Layout'];
 
 export default function ComponentsPage() {
   const { user, initialized } = useAuthStore();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
   const [filtered, setFiltered] = useState<FirestoreSnippet[]>([]);
@@ -135,31 +141,29 @@ export default function ComponentsPage() {
               />
             </div>
           </div>
-          <div className={styles.navRight}>
+          <div className={styles.navActions}>
+            <button 
+              onClick={toggleTheme}
+              className={styles.themeToggleBtn}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              <span className="material-symbols-outlined">
+                {theme === 'light' ? 'dark_mode' : 'light_mode'}
+              </span>
+            </button>
             {!initialized ? (
               <div style={{ width: '120px', height: '40px', background: 'var(--surface-alt)', borderRadius: 'var(--radius-DEFAULT)', animation: 'pulse 1.5s infinite' }}></div>
             ) : user ? (
               <>
                 <button
                   onClick={() => router.push(`/${user.username}`)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '0.4rem 0.875rem',
-                    background: 'transparent',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-DEFAULT)',
-                    color: 'var(--text-primary)',
-                    fontSize: '13px', fontWeight: 600,
-                    cursor: 'pointer', transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-subtle)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
+                  className={styles.goToSnippetsBtn}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>code</span>
                   My Snippets
                 </button>
                 <div
-                  className={styles.avatar}
+                  className={styles.navAvatar}
                   onClick={() => router.push(`/${user.username}/profile`)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -171,11 +175,20 @@ export default function ComponentsPage() {
                 </div>
               </>
             ) : (
-              <Link href="/" className="btn-primary" style={{ fontSize: '13px' }}>Sign In</Link>
+              <>
+                <button className={styles.loginBtn} onClick={() => { setAuthMode('signin'); setIsAuthModalOpen(true); }}>Sign in</button>
+                <button className={styles.signupBtn} onClick={() => { setAuthMode('signup'); setIsAuthModalOpen(true); }}>Sign up</button>
+              </>
             )}
           </div>
         </div>
       </nav>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authMode}
+      />
 
       {/* Main Content */}
       <main className={styles.main}>
@@ -237,9 +250,10 @@ export default function ComponentsPage() {
                   // First card is large (featured)
                   const isLarge = idx === 0;
                   const isTrending = (s.viewCount || 0) > 100;
-                  const snippetUrl = s.ownerUsername
-                    ? `/${s.ownerUsername}/snippets/${s.slug || s.id}`
-                    : `/${s.ownerId}/snippets/${s.slug || s.id}`;
+                  const isOwnerOrCollaborator = user?.id === s.ownerId || (s.collaborators && s.collaborators.includes(user?.id || ''));
+                  const snippetUrl = isOwnerOrCollaborator
+                    ? `/${s.ownerUsername || s.ownerId}/snippets/${s.slug || s.id}`
+                    : `/s/${s.id}-${s.slug || 'untitled'}`;
                   const isFavorited = user?.favoriteSnippets?.includes(s.id);
 
                   return (
