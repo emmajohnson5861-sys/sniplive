@@ -68,7 +68,6 @@ export default function Sidebar() {
             className={`${styles.snippetItem} ${filter === 'all' ? styles.active : ''}`}
             onClick={() => {
               setFilter('all');
-              if (user) router.push(`/${user.username}`);
               closeMobile();
             }}
           >
@@ -79,7 +78,6 @@ export default function Sidebar() {
             className={`${styles.snippetItem} ${filter === 'favorites' ? styles.active : ''}`}
             onClick={() => {
               setFilter('favorites');
-              if (user) router.push(`/${user.username}`);
               closeMobile();
             }}
           >
