@@ -17,7 +17,7 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.leftSection}>
-        <h1 className={styles.logo} onClick={() => router.push('/')}>SnipLive</h1>
+        <img src="/logo.png" alt="SnipLive" className={styles.logoImg} onClick={() => router.push('/')} />
         <div className={styles.navLinks}>
           <Link href="/" className={styles.navLink}>Explore</Link>
           <Link href="/components" className={styles.navLink}>Components</Link>

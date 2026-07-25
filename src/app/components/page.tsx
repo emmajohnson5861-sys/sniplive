@@ -119,7 +119,7 @@ export default function ComponentsPage() {
       <nav className={styles.nav}>
         <div className={styles.navContent}>
           <div className={styles.navLeft}>
-            <Link href="/" className={styles.logo}>SnipLive</Link>
+            <img src="/logo.png" alt="SnipLive" className={styles.logoImg} onClick={() => router.push('/')} />
             <div className={styles.navLinks}>
               <Link href="/" className={styles.navLink}>Explore</Link>
               <Link href="/components" className={styles.navLinkActive}>Components</Link>

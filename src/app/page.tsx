@@ -41,7 +41,7 @@ export default function LandingPage() {
       <nav className={styles.nav}>
         <div className={styles.navContent}>
           <div className={styles.navLeft}>
-            <span className={styles.logo}>SnipLive</span>
+            <img src="/logo.png" alt="SnipLive" className={styles.logoImg} onClick={() => router.push('/')} />
             <div className={styles.navLinks}>
               <a href="#" className={styles.navLinkActive}>Explore</a>
               <Link href="/components" className={styles.navLink}>Components</Link>
