@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSnippet, incrementSnippetView, FirestoreSnippet } from '@/lib/firebase-db';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import styles from './page.module.css';
 
 export default function SharedSnippetViewer() {
@@ -14,6 +14,10 @@ export default function SharedSnippetViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasIncremented = useRef(false);
+
+  useEffect(() => {
+    initAuthListener();
+  }, []);
 
   useEffect(() => {
     if (!initialized) return;
