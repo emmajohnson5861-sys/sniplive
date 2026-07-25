@@ -633,4 +633,11 @@ export const toggleFavoriteSnippet = async (userId: string, snippetId: string, i
   }
 };
 
+export const incrementSnippetViewCount = async (id: string) => {
+  const ref = doc(db, 'snippets', id);
+  await updateDoc(ref, {
+    viewCount: increment(1)
+  });
+};
+
 export { db, getDocs, query, collection, where };

@@ -301,7 +301,7 @@ export default function UserProfilePage() {
                   </div>
                   <button className={styles.iconBtn} onClick={(e) => {
                     e.stopPropagation();
-                    const url = `${window.location.origin}/${userProfile.username}/snippets/${snippet.slug || snippet.id}`;
+                    const url = `${window.location.origin}/s/${snippet.id}-${snippet.slug || snippet.id}`;
                     navigator.clipboard.writeText(url);
                     alert('Link copied!');
                   }}>
