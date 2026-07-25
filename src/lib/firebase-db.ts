@@ -618,4 +618,18 @@ export async function redeemInvite(inviteId: string, currentUserEmail: string, c
 export async function toggleGroupVisibility(groupId: string, isPublic: boolean) {
   await setDoc(doc(db, 'groups', groupId), { isPublic, updatedAt: serverTimestamp() } as any, { merge: true });
 }
+
+export const toggleFavoriteSnippet = async (userId: string, snippetId: string, isFavoriting: boolean) => {
+  const userRef = doc(db, 'users', userId);
+  if (isFavoriting) {
+    await updateDoc(userRef, {
+      favoriteSnippets: arrayUnion(snippetId)
+    });
+  } else {
+    await updateDoc(userRef, {
+      favoriteSnippets: arrayRemove(snippetId)
+    });
+  }
+};
+
 export { db, getDocs, query, collection, where };
