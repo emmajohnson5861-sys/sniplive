@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { sendNotification } from '@/lib/firebase-db';
+import { useToast } from '@/components/Toast';
 
 export default function BannedOverlay() {
   const { user, firebaseUser, initialized } = useAuthStore();
@@ -11,6 +12,7 @@ export default function BannedOverlay() {
   const router = useRouter();
   const [shake, setShake] = useState(false);
   const [unbanRequested, setUnbanRequested] = useState(false);
+  const { showToast } = useToast();
 
   // Let them view profiles unhindered (where they can already request unban)
   if (!initialized || !user || !user.isBanned) return null;
@@ -33,10 +35,10 @@ export default function BannedOverlay() {
         fromUserEmail: user.email,
       });
       setUnbanRequested(true);
-      alert('Unban request sent to administrators.');
+      showToast('Unban request sent to administrators.', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to send request.');
+      showToast('Failed to send request.', 'error');
     }
   };
 

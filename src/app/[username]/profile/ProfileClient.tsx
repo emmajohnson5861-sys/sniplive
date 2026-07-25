@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getUserByUsernameOrId, getPublicUserSnippets, getUserSnippets, FirestoreUser, FirestoreSnippet, updateUser, toggleFavoriteSnippet } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
+import { useToast } from '@/components/Toast';
 import BannedUserView from '@/components/BannedUserView';
 import styles from './ProfileClient.module.css';
 
@@ -14,6 +15,7 @@ export default function UserProfilePage() {
   const { firebaseUser, user: authUser, initialized } = useAuthStore();
   const [snippets, setSnippets] = useState<FirestoreSnippet[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   // Edit State
   const [editName, setEditName] = useState('');
@@ -62,7 +64,7 @@ export default function UserProfilePage() {
     if (!file || !firebaseUser || !userProfile || !isOwner) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be less than 2MB.");
+      showToast("Image must be less than 2MB.", 'error');
       return;
     }
 
@@ -73,8 +75,8 @@ export default function UserProfilePage() {
         await updateUser(userProfile.id, { avatarUrl: base64 });
         setUserProfile({ ...userProfile, avatarUrl: base64 });
       } catch (err) {
-        console.error(err);
-        alert('Failed to upload avatar.');
+        console.error('Avatar upload error:', err);
+        showToast('Failed to upload avatar.', 'error');
       }
     };
     reader.readAsDataURL(file);
@@ -89,10 +91,11 @@ export default function UserProfilePage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
-      console.error(err);
-      alert('Failed to save profile.');
+      console.error('Save error:', err);
+      showToast('Failed to save profile.', 'error');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const handleToggleFavorite = async (e: React.MouseEvent, snippetId: string) => {
@@ -303,7 +306,7 @@ export default function UserProfilePage() {
                     e.stopPropagation();
                     const url = `${window.location.origin}/s/${snippet.id}-${snippet.slug || snippet.id}`;
                     navigator.clipboard.writeText(url);
-                    alert('Link copied!');
+                    showToast('Link copied!', 'success');
                   }}>
                     <span className="material-symbols-outlined">share</span>
                   </button>

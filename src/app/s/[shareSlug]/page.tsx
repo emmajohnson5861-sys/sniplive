@@ -7,6 +7,7 @@ import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import styles from './page.module.css';
 import dynamic from 'next/dynamic';
 import LivePreview from '@/components/LivePreview';
+import { useToast } from '@/components/Toast';
 
 const CodeEditor = dynamic(() => import('@/components/CodeEditor'), { ssr: false });
 
@@ -21,6 +22,7 @@ export default function SharedSnippetViewer() {
   const [cssCode, setCssCode] = useState('');
   const [jsCode, setJsCode] = useState('');
   const hasIncremented = useRef(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     initAuthListener();
@@ -105,9 +107,9 @@ export default function SharedSnippetViewer() {
         </div>
         <div className={styles.headerRight}>
           <button className={styles.actionBtn} onClick={() => {
-            const url = `${window.location.origin}/s/${snippet.id}-${snippet.slug}`;
+            const url = `${window.location.origin}/s/${snippet.id}-${snippet.slug || snippet.id}`;
             navigator.clipboard.writeText(url);
-            alert('Link copied!');
+            showToast('Link copied!', 'success');
           }}>
             <span className="material-symbols-outlined">share</span>
             Share

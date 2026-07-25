@@ -4,11 +4,13 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useSettingsStore } from '@/store/settings-store';
+import { useToast } from '@/components/Toast';
 import styles from './page.module.css';
 
 export default function EditorSettingsPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { showToast } = useToast();
   
   const { 
     fontFamily, setFontFamily,
@@ -33,7 +35,7 @@ export default function EditorSettingsPage() {
           </button>
           <h1 className={styles.headerTitle}>Editor Settings</h1>
         </div>
-        <button className={styles.saveBtn} onClick={() => alert('Settings saved locally!')}>
+        <button className={styles.saveBtn} onClick={() => showToast('Settings saved locally!', 'success')}>
           Save Changes
         </button>
       </div>

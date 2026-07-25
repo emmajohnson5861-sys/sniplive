@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead, Notification, approveAccess, denyAccess, updateUser } from '@/lib/firebase-db';
+import { useToast } from '@/components/Toast';
 import { Bell, CheckCheck, UserPlus, Check, X, ExternalLink, ShieldAlert } from 'lucide-react';
 
 export default function AdminNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     setLoading(true);
@@ -53,10 +55,10 @@ export default function AdminNotifications() {
     try {
       await updateUser(n.fromUserId, { isBanned: false } as any);
       await handleMarkRead(n.id);
-      alert(`${n.fromUserName || n.fromUserEmail} has been unbanned.`);
+      showToast(`${n.fromUserName || n.fromUserEmail} has been unbanned.`, 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to unban user.');
+      showToast('Failed to unban user.', 'error');
     }
   };
 
