@@ -33,6 +33,7 @@ interface SnippetContextType {
   deleteSnippet: (id: string) => void;
   updateSnippetTitle: (id: string, newTitle: string) => void;
   forkSnippet: (original: Snippet | FirestoreSnippet) => Promise<string | null>;
+  setExternalSnippet: (snippet: Snippet | null) => void;
 }
 
 const SnippetContext = createContext<SnippetContextType | undefined>(undefined);
@@ -41,6 +42,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser } = useAuthStore();
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>(null);
+  const [externalSnippet, setExternalSnippet] = useState<Snippet | null>(null);
   const [loadedFromCloud, setLoadedFromCloud] = useState(false);
 
   useEffect(() => {
@@ -210,11 +212,21 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     }
   }, [firebaseUser, user]);
 
+  const activeSnippet = externalSnippet || snippets.find(s => s.id === activeSnippetId) || null;
+
   return (
     <SnippetContext.Provider value={{
-      snippets, activeSnippetId, activeSnippet, loadedFromCloud,
-      setActiveSnippetId, saveSnippet, createNewSnippet,
-      deleteSnippet, updateSnippetTitle, forkSnippet
+      snippets,
+      activeSnippetId,
+      activeSnippet,
+      loadedFromCloud,
+      setActiveSnippetId,
+      saveSnippet,
+      createNewSnippet,
+      deleteSnippet,
+      updateSnippetTitle,
+      forkSnippet,
+      setExternalSnippet
     }}>
       {children}
     </SnippetContext.Provider>

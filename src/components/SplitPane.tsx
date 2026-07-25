@@ -233,6 +233,9 @@ export default function SplitPane() {
     }
   };
 
+  const firebaseUser = useAuthStore(state => state.firebaseUser);
+  const isFavorited = activeSnippet ? (firebaseUser?.favoriteSnippets?.includes(activeSnippet.id) || false) : false;
+
   if (!activeSnippet) {
     return (
       <div className={styles.emptyStateContainer}>
@@ -298,8 +301,6 @@ export default function SplitPane() {
   }
 
   const isOwner = user?.id === activeSnippet.ownerId;
-  const firebaseUser = useAuthStore(state => state.firebaseUser);
-  const isFavorited = firebaseUser?.favoriteSnippets?.includes(activeSnippet.id) || false;
 
   const handleToggleFavorite = async () => {
     if (!user) return;

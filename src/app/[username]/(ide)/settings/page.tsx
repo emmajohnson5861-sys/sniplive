@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import { useSettingsStore } from '@/store/settings-store';
 import styles from './page.module.css';
 
 export default function EditorSettingsPage() {
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   
   const { 
@@ -21,7 +23,16 @@ export default function EditorSettingsPage() {
   return (
     <div className={styles.settingsContainer}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.headerTitle}>Editor Settings</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => router.back()} 
+            title="Go back"
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 className={styles.headerTitle}>Editor Settings</h1>
+        </div>
         <button className={styles.saveBtn} onClick={() => alert('Settings saved locally!')}>
           Save Changes
         </button>

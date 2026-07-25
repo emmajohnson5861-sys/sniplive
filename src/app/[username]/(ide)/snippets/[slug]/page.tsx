@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
-import PublicSnippet from '@/components/PublicSnippet';
+import { getPublicUserSnippets, getUserByUsernameOrId, getSnippetById, getSnippetBySlug } from '@/lib/firebase-db';
 import BannedUserView from '@/components/BannedUserView';
 import styles from './page.module.css';
 import SplitPane from '@/components/SplitPane';
@@ -12,7 +12,7 @@ import SplitPane from '@/components/SplitPane';
 export default function IDEPage() {
   const params = useParams();
   const router = useRouter();
-  const { snippets, activeSnippet, setActiveSnippetId, loadedFromCloud } = useSnippetContext();
+  const { snippets, activeSnippet, setActiveSnippetId, setExternalSnippet, loadedFromCloud } = useSnippetContext();
   const { user, initialized } = useAuthStore();
   const isInitialMount = useRef(true);
 
@@ -47,19 +47,43 @@ export default function IDEPage() {
   const targetUsername = params.username as string;
   const targetSlug = params.slug as string | undefined;
 
-  // Wait for auth to initialize before making routing decisions
+  useEffect(() => {
+    if (!initialized || !loadedFromCloud) return;
+
+    const currentSlug = params.slug as string | undefined;
+    const isExternalUser = targetUsername !== 'sandbox' && (!user || user.username !== targetUsername);
+
+    if (isExternalUser && currentSlug) {
+      // Fetch external snippet
+      const fetchExternal = async () => {
+        try {
+          const u = await getUserByUsernameOrId(targetUsername);
+          if (!u) return;
+          const extSnippets = await getPublicUserSnippets(u.id);
+          const found = extSnippets.find(s => s.slug === currentSlug || s.id === currentSlug);
+          if (found) {
+            setExternalSnippet({
+              id: found.id, slug: found.slug, title: found.title, html: found.html, css: found.css, js: found.js,
+              createdAt: found.createdAt?.toDate()?.getTime() || Date.now(),
+              updatedAt: found.updatedAt?.toDate()?.getTime() || Date.now(),
+              visibility: found.visibility, isLive: found.isLive, allowForking: found.allowForking, forkedFromId: found.forkedFromId,
+              ownerId: found.ownerId, collaborators: found.collaborators, pendingRequests: found.pendingRequests,
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      fetchExternal();
+    } else {
+      setExternalSnippet(null);
+    }
+  }, [targetUsername, params.slug, initialized, loadedFromCloud, user]);
+
   if (!initialized) return null;
 
   if (user?.isBanned) {
     return <BannedUserView />;
-  }
-
-  if (user && user.username !== targetUsername) {
-    return <PublicSnippet username={targetUsername} snippetSlug={targetSlug} />;
-  }
-
-  if (!user && targetUsername !== 'sandbox') {
-     return <PublicSnippet username={targetUsername} snippetSlug={targetSlug} />;
   }
 
   return (

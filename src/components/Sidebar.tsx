@@ -66,14 +66,22 @@ export default function Sidebar() {
         <nav className={styles.navLinks}>
           <div 
             className={`${styles.snippetItem} ${filter === 'all' ? styles.active : ''}`}
-            onClick={() => setFilter('all')}
+            onClick={() => {
+              setFilter('all');
+              if (user) router.push(`/${user.username}`);
+              closeMobile();
+            }}
           >
             <span className="material-symbols-outlined">code_blocks</span>
             <span style={{ fontWeight: 500, flex: 1 }}>All Snippets</span>
           </div>
           <div 
             className={`${styles.snippetItem} ${filter === 'favorites' ? styles.active : ''}`}
-            onClick={() => setFilter('favorites')}
+            onClick={() => {
+              setFilter('favorites');
+              if (user) router.push(`/${user.username}`);
+              closeMobile();
+            }}
           >
             <span className="material-symbols-outlined">favorite</span>
             <span style={{ fontWeight: 500, flex: 1 }}>Favorites</span>
@@ -85,6 +93,8 @@ export default function Sidebar() {
               className={`${styles.snippetItem} ${activeSnippetId === snippet.id ? styles.active : ''}`}
               onClick={() => {
                 setActiveSnippetId(snippet.id);
+                const ownerId = snippet.ownerUsername || snippet.ownerId;
+                router.push(`/${ownerId}/snippets/${snippet.slug || snippet.id}`);
                 closeMobile();
               }}
               style={{ paddingLeft: '3rem' }}
