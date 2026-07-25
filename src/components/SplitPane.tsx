@@ -284,7 +284,7 @@ export default function SplitPane() {
         {/* Keyboard Shortcuts Footer (Contextual Hint) */}
         <div className={styles.emptyStateKeyboardHints}>
           <div className={styles.hintGroup}>
-            <span className={styles.kbdKey}>Ctrl</span>
+            <span className={styles.kbdKey}>Alt</span>
             <span className={styles.kbdKey}>N</span>
             <span>to create new</span>
           </div>
