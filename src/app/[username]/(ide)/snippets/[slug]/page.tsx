@@ -40,7 +40,7 @@ export default function IDEPage() {
       const currentSlug = params.slug as string | undefined;
       
       if (currentSlug !== targetSlug) {
-        window.history.pushState(null, '', `/${params.username}/snippets/${targetSlug}`);
+        router.replace(`/${params.username}/snippets/${targetSlug}`);
       }
     }
   }, [activeSnippet?.id, activeSnippet?.slug, loadedFromCloud]);

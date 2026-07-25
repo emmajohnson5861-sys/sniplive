@@ -33,7 +33,7 @@ export default function Sidebar() {
 
   const filteredSnippets = snippets.filter(s => {
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filter === 'all' || firebaseUser?.favoriteSnippets?.includes(s.id);
+    const matchesFilter = filter === 'all' || user?.favoriteSnippets?.includes(s.id);
     return matchesSearch && matchesFilter;
   });
 
