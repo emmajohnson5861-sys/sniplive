@@ -184,7 +184,6 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     }
   }, [snippets, activeSnippetId, firebaseUser]);
 
-  const activeSnippet = snippets.find(s => s.id === activeSnippetId) || null;
 
   const forkSnippet = useCallback(async (original: Snippet | FirestoreSnippet) => {
     if (!firebaseUser) {
