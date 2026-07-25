@@ -18,6 +18,7 @@ export interface Snippet {
   allowForking?: boolean;
   forkedFromId?: string | null;
   ownerId?: string;
+  ownerUsername?: string;
   collaborators?: string[];
   pendingRequests?: string[];
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
-import { getPublicUserSnippets, getUserByUsernameOrId, getSnippetById, getSnippetBySlug } from '@/lib/firebase-db';
+import { getPublicUserSnippets, getUserByUsernameOrId } from '@/lib/firebase-db';
 import BannedUserView from '@/components/BannedUserView';
 import styles from './page.module.css';
 import SplitPane from '@/components/SplitPane';
