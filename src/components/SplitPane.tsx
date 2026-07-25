@@ -33,7 +33,8 @@ export default function SplitPane() {
   const [htmlCode, setHtmlCode] = useState('');
   const [cssCode, setCssCode] = useState('');
   const [jsCode, setJsCode] = useState('');
-  const lastSavedCloud = useRef({ id: '', html: '', css: '', js: '' });
+  const [reactCode, setReactCode] = useState('');
+  const lastSavedCloud = useRef({ id: '', html: '', css: '', js: '', react: '' });
 
   useEffect(() => {
     if (activeSnippet) {
@@ -44,7 +45,8 @@ export default function SplitPane() {
         setHtmlCode(activeSnippet.html);
         setCssCode(activeSnippet.css);
         setJsCode(activeSnippet.js);
-        lastSavedCloud.current = { id: activeSnippet.id, html: activeSnippet.html, css: activeSnippet.css, js: activeSnippet.js };
+        setReactCode(activeSnippet.react || '');
+        lastSavedCloud.current = { id: activeSnippet.id, html: activeSnippet.html, css: activeSnippet.css, js: activeSnippet.js, react: activeSnippet.react || '' };
         setIsSaved(true);
       } else {
         const oldCloud = { ...lastSavedCloud.current };
@@ -60,13 +62,18 @@ export default function SplitPane() {
           setJsCode(prev => prev === oldCloud.js ? activeSnippet.js : prev);
           lastSavedCloud.current.js = activeSnippet.js;
         }
+        if ((activeSnippet.react || '') !== oldCloud.react) {
+          setReactCode(prev => prev === oldCloud.react ? (activeSnippet.react || '') : prev);
+          lastSavedCloud.current.react = activeSnippet.react || '';
+        }
       }
     } else {
       setHtmlCode('');
       setCssCode('');
       setJsCode('');
+      setReactCode('');
       setTitle('Untitled Snippet');
-      lastSavedCloud.current = { id: '', html: '', css: '', js: '' };
+      lastSavedCloud.current = { id: '', html: '', css: '', js: '', react: '' };
     }
   }, [activeSnippet]);
 
@@ -76,22 +83,23 @@ export default function SplitPane() {
     if (!activeSnippet || !autoSave) return;
     
     // Check if there are actual changes
-    if (htmlCode !== activeSnippet.html || cssCode !== activeSnippet.css || jsCode !== activeSnippet.js) {
+    if (htmlCode !== activeSnippet.html || cssCode !== activeSnippet.css || jsCode !== activeSnippet.js || reactCode !== (activeSnippet.react || '')) {
       const timeout = setTimeout(() => {
         saveSnippet({
           ...activeSnippet,
           html: htmlCode,
           css: cssCode,
-          js: jsCode
+          js: jsCode,
+          react: reactCode,
         });
-        lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode };
+        lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode, react: reactCode };
         setIsSaved(true);
       }, 2000); // 2 second autosave debounce
       
       setIsSaved(false);
       return () => clearTimeout(timeout);
     }
-  }, [htmlCode, cssCode, jsCode, activeSnippet, saveSnippet]);
+  }, [htmlCode, cssCode, jsCode, reactCode, activeSnippet, saveSnippet]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -164,8 +172,8 @@ export default function SplitPane() {
 
   const handleSave = () => {
     if (activeSnippet) {
-      saveSnippet({ ...activeSnippet, title, html: htmlCode, css: cssCode, js: jsCode });
-      lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode };
+      saveSnippet({ ...activeSnippet, title, html: htmlCode, css: cssCode, js: jsCode, react: reactCode });
+      lastSavedCloud.current = { id: activeSnippet.id, html: htmlCode, css: cssCode, js: jsCode, react: reactCode };
       setIsSaved(true);
     }
   };
@@ -449,6 +457,7 @@ export default function SplitPane() {
               html={htmlCode} setHtml={setHtmlCode}
               css={cssCode} setCss={setCssCode}
               js={jsCode} setJs={setJsCode}
+              react={reactCode} setReact={setReactCode}
             />
           </div>
         )}
@@ -469,7 +478,7 @@ export default function SplitPane() {
             style={{ width: isMobile ? '100%' : `${100 - leftWidth}%` }}
           >
             <div style={{ width: '100%', height: '100%', pointerEvents: isDragging ? 'none' : 'auto', position: 'relative' }}>
-              <LivePreview html={htmlCode} css={cssCode} js={jsCode} />
+              <LivePreview html={htmlCode} css={cssCode} js={jsCode} react={reactCode} />
             </div>
           </div>
         )}

@@ -11,6 +11,7 @@ export interface Snippet {
   html: string;
   css: string;
   js: string;
+  react?: string;
   createdAt: number;
   updatedAt: number;
   visibility?: 'private' | 'unlisted' | 'public';
@@ -50,7 +51,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     if (firebaseUser) {
       const unsubscribeSnippets = subscribeToUserSnippets(firebaseUser.uid, (cloudSnippets) => {
         const mapped = cloudSnippets.map(s => ({
-          id: s.id, slug: s.slug, title: s.title, html: s.html, css: s.css, js: s.js,
+          id: s.id, slug: s.slug, title: s.title, html: s.html, css: s.css, js: s.js, react: s.react,
           createdAt: s.createdAt?.toDate()?.getTime() || Date.now(),
           updatedAt: s.updatedAt?.toDate()?.getTime() || Date.now(),
           visibility: s.visibility, isLive: s.isLive, allowForking: s.allowForking, forkedFromId: s.forkedFromId,
@@ -92,7 +93,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
     if (firebaseUser) {
       const fbData: Record<string, unknown> = {
-        title: snippet.title, html: snippet.html, css: snippet.css, js: snippet.js,
+        title: snippet.title, html: snippet.html, css: snippet.css, js: snippet.js, react: snippet.react,
       };
       if (snippet.ownerId || enriched.ownerId) {
         fbData.ownerId = snippet.ownerId || enriched.ownerId;
@@ -147,6 +148,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       html: '<!-- Write your HTML here -->\n',
       css: '/* Write your CSS here */\n',
       js: '// Write your JS here\n',
+      react: '// Write your React JSX here\n// e.g., export default function App() { return <h1>Hello</h1> }\n',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       ownerId,

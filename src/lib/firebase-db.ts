@@ -28,6 +28,7 @@ export interface FirestoreSnippet {
   html: string;
   css: string;
   js: string;
+  react?: string;
   visibility: 'private' | 'unlisted' | 'public';
   isLive: boolean;
   liveTitle?: string | null;

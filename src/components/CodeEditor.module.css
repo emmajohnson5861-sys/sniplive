@@ -48,6 +48,23 @@
   background: var(--primary);
 }
 
+/* React tab special styling */
+.tabReact {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #61dafb88;
+}
+.tabReact:hover {
+  color: #61dafb;
+}
+.tabReact.active {
+  color: #61dafb;
+}
+.tabReact.active::after {
+  background: #61dafb;
+}
+
 .codeArea {
   flex: 1;
   overflow: auto;
