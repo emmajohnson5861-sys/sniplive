@@ -84,42 +84,6 @@
   flex-direction: column;
   border-right: 1px solid var(--border-subtle);
   background-color: var(--surface);
-  overflow-y: auto;
-}
-
-.codeTabs {
-  display: flex;
-  background-color: var(--surface-alt);
-  border-bottom: 1px solid var(--border-subtle);
-  border-top: 1px solid var(--border-subtle);
-}
-
-.codeTabs:first-child {
-  border-top: none;
-}
-
-.tab {
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  background-color: var(--surface);
-  border-right: 1px solid var(--border-subtle);
-  font-weight: 600;
-}
-
-.codeEditor {
-  flex: 1;
-  min-height: 200px;
-  padding: 1rem;
-  background-color: var(--background);
-  overflow: auto;
-}
-
-.codeEditor pre {
-  margin: 0;
-  font-family: var(--font-geist-mono);
-  font-size: 0.875rem;
-  color: var(--text-primary);
 }
 
 .previewPanel {

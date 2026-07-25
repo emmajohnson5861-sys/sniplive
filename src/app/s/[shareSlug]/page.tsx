@@ -5,6 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { getSnippet, incrementSnippetView, FirestoreSnippet } from '@/lib/firebase-db';
 import { useAuthStore, initAuthListener } from '@/store/auth-store';
 import styles from './page.module.css';
+import dynamic from 'next/dynamic';
+import LivePreview from '@/components/LivePreview';
+
+const CodeEditor = dynamic(() => import('@/components/CodeEditor'), { ssr: false });
 
 export default function SharedSnippetViewer() {
   const params = useParams();
@@ -13,6 +17,9 @@ export default function SharedSnippetViewer() {
   const [snippet, setSnippet] = useState<FirestoreSnippet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [htmlCode, setHtmlCode] = useState('');
+  const [cssCode, setCssCode] = useState('');
+  const [jsCode, setJsCode] = useState('');
   const hasIncremented = useRef(false);
 
   useEffect(() => {
@@ -44,6 +51,9 @@ export default function SharedSnippetViewer() {
         }
 
         setSnippet(fetchedSnippet);
+        setHtmlCode(fetchedSnippet.html || '');
+        setCssCode(fetchedSnippet.css || '');
+        setJsCode(fetchedSnippet.js || '');
 
         // Increment View Count (only once per session)
         if (!hasIncremented.current) {
@@ -86,13 +96,6 @@ export default function SharedSnippetViewer() {
     );
   }
 
-  const iframeSrc = `data:text/html;charset=utf-8,${encodeURIComponent(`
-    <html>
-      <head><style>body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: transparent; color: white; font-family: sans-serif; } ${snippet.css}</style></head>
-      <body>${snippet.html}<script>${snippet.js}</script></body>
-    </html>
-  `)}`;
-
   return (
     <div className={styles.sharedViewer}>
       <header className={styles.header}>
@@ -117,33 +120,15 @@ export default function SharedSnippetViewer() {
 
       <main className={styles.mainContent}>
         <div className={styles.codePanel}>
-          <div className={styles.codeTabs}>
-            <div className={styles.tab}>HTML</div>
-          </div>
-          <div className={styles.codeEditor}>
-            <pre><code>{snippet.html}</code></pre>
-          </div>
-          <div className={styles.codeTabs}>
-            <div className={styles.tab}>CSS</div>
-          </div>
-          <div className={styles.codeEditor}>
-            <pre><code>{snippet.css}</code></pre>
-          </div>
-          <div className={styles.codeTabs}>
-            <div className={styles.tab}>JS</div>
-          </div>
-          <div className={styles.codeEditor}>
-            <pre><code>{snippet.js}</code></pre>
-          </div>
+          <CodeEditor 
+            html={htmlCode} setHtml={setHtmlCode}
+            css={cssCode} setCss={setCssCode}
+            js={jsCode} setJs={setJsCode}
+          />
         </div>
 
         <div className={styles.previewPanel}>
-          <iframe 
-            src={iframeSrc}
-            className={styles.iframe}
-            sandbox="allow-scripts"
-            title={snippet.title}
-          />
+          <LivePreview html={htmlCode} css={cssCode} js={jsCode} />
         </div>
       </main>
     </div>
