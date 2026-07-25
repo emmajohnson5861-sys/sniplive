@@ -16,16 +16,10 @@ export default function LandingPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
-  // We still do the automatic redirect if they land here and are logged in,
-  // but if they navigate back we might want them to be able to see the page.
-  // Actually, usually a landing page redirects logged-in users to their dashboard.
-  // I will keep the redirect, but also update the button to navigate to dashboard if clicked.
+  // Initialize auth listener
   useEffect(() => {
     initAuthListener();
-    if (initialized && firebaseUser && user?.username) {
-      router.replace(`/${user.username}`);
-    }
-  }, [initialized, firebaseUser, user?.username, router]);
+  }, []);
 
   const handleStartSnipping = () => {
     if (user?.username) {
