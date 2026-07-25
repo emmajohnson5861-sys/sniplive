@@ -7,6 +7,8 @@ import { html as htmlLang } from '@codemirror/lang-html';
 import { css as cssLang } from '@codemirror/lang-css';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { useSettingsStore } from '@/store/settings-store';
+import { useTheme } from '@/context/ThemeContext';
 import styles from './CodeEditor.module.css';
 
 interface CodeEditorProps {
@@ -613,11 +615,26 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, read
   const [activeTab, setActiveTab] = useState<TabType>('html');
   const [isMounted, setIsMounted] = useState(false);
 
+  const { showLineNumbers, bracketPairing, tabSize, fontFamily, fontSize, lineHeight } = useSettingsStore();
+  const { theme } = useTheme();
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   if (!isMounted) return <div className={styles.editorContainer}><div className={styles.tabs}></div></div>;
+
+  const basicSetup = {
+    lineNumbers: showLineNumbers,
+    bracketMatching: bracketPairing,
+    tabSize: tabSize,
+  };
+
+  const editorStyle = {
+    fontFamily: fontFamily === 'Geist Mono' ? 'var(--font-mono)' : `'${fontFamily}', monospace`,
+    fontSize: `${fontSize}px`,
+    lineHeight: lineHeight,
+  };
 
   return (
     <div className={styles.editorContainer}>
@@ -649,6 +666,8 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, read
             height="100%"
             theme={oneDark}
             extensions={[htmlLang()]}
+            basicSetup={basicSetup}
+            style={editorStyle}
             onChange={(value) => setHtml(value)}
             className={styles.cmWrapper}
             readOnly={readOnly}
@@ -661,6 +680,8 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, read
             height="100%"
             theme={oneDark}
             extensions={[cssLang()]}
+            basicSetup={basicSetup}
+            style={editorStyle}
             onChange={(value) => setCss(value)}
             className={styles.cmWrapper}
             readOnly={readOnly}
@@ -673,9 +694,11 @@ export default function CodeEditor({ html, setHtml, css, setCss, js, setJs, read
             height="100%"
             theme={oneDark}
             extensions={[
-            javascript({ jsx: true, typescript: true }),
-            javascriptLanguage.data.of({ autocomplete: jsCompletionSource }),
-          ]}
+              javascript({ jsx: true, typescript: true }),
+              javascriptLanguage.data.of({ autocomplete: jsCompletionSource }),
+            ]}
+            basicSetup={basicSetup}
+            style={editorStyle}
             onChange={(value) => setJs(value)}
             className={styles.cmWrapper}
             readOnly={readOnly}

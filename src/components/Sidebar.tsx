@@ -100,10 +100,12 @@ export default function Sidebar() {
             </span>
             <span style={{ fontWeight: 500 }}>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
           </a>
-          <a href="#" className={styles.settingsLink}>
-            <span className="material-symbols-outlined">settings</span>
-            <span style={{ fontWeight: 500 }}>Settings</span>
-          </a>
+          {initialized && user && (
+            <a href={`/${user.username}/settings`} className={styles.settingsLink} onClick={(e) => { e.preventDefault(); router.push(`/${user.username}/settings`); closeMobile(); }}>
+              <span className="material-symbols-outlined">settings</span>
+              <span style={{ fontWeight: 500 }}>Settings</span>
+            </a>
+          )}
           
           {initialized && user && (user.role === 'ADMIN' || user.role === 'EDITOR') && (
             <a href="/admin" className={styles.settingsLink} onClick={(e) => { e.preventDefault(); router.push('/admin'); }}>

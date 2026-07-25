@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import LivePreview from './LivePreview';
 import { useSnippetContext } from '@/context/SnippetContext';
 import { useAuthStore } from '@/store/auth-store';
+import { useSettingsStore } from '@/store/settings-store';
 import { updateSnippet } from '@/lib/firebase-db';
 import GoLiveModal, { GoLiveData } from './GoLiveModal';
 
@@ -70,8 +71,9 @@ export default function SplitPane() {
   }, [activeSnippet]);
 
   // Autosave functionality
+  const { autoSave } = useSettingsStore();
   useEffect(() => {
-    if (!activeSnippet) return;
+    if (!activeSnippet || !autoSave) return;
     
     // Check if there are actual changes
     if (htmlCode !== activeSnippet.html || cssCode !== activeSnippet.css || jsCode !== activeSnippet.js) {
