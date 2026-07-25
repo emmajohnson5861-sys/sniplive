@@ -14,49 +14,52 @@ export default function IDEPage() {
   const router = useRouter();
   const { snippets, activeSnippet, setActiveSnippetId, setExternalSnippet, loadedFromCloud } = useSnippetContext();
   const { user, initialized } = useAuthStore();
-  const isInitialMount = useRef(true);
+  const prevSlugRef = useRef<string | undefined>(undefined);
   const targetUsername = params.username as string;
 
-  // Sync from URL to state
+  // Sync from URL to state — only runs when the URL slug changes, not on every snippets update
   useEffect(() => {
     if (!loadedFromCloud) return;
     const currentSlug = params.slug as string | undefined;
 
+    // If the slug hasn't changed since last time we processed it, skip
+    if (currentSlug === prevSlugRef.current) return;
+    prevSlugRef.current = currentSlug;
+
     if (currentSlug) {
-      // Find snippet by slug or fallback to id
       const found = snippets.find(s => s.slug === currentSlug || s.id === currentSlug);
       if (found) {
         if (found.id !== activeSnippet?.id) {
           setActiveSnippetId(found.id);
         }
       } else if (user && targetUsername === user.username) {
-        // Snippet not found in OUR snippets, and we are viewing OUR profile.
-        // It was either deleted or the slug is invalid.
-        // Redirect to empty state.
-        router.replace(`/${params.username}/snippets`);
+        // Snippet not found in OUR snippets and we are viewing OUR profile.
+        // Redirect to empty state only if snippets have loaded and it's genuinely missing.
+        if (snippets.length > 0) {
+          router.replace(`/${params.username}/snippets`);
+        }
       }
     } else if (snippets.length > 0 && !activeSnippet) {
-      // No slug in URL, set default
       setActiveSnippetId(snippets[0].id);
     }
-  }, [params.slug, loadedFromCloud, snippets, user, targetUsername, params.username, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.slug, loadedFromCloud]);
 
-  // Sync from state to URL
+  // Sync from state to URL — pushes when active snippet changes
   useEffect(() => {
     if (!loadedFromCloud || !params.username) return;
 
     if (activeSnippet) {
       const targetSlug = activeSnippet.slug || activeSnippet.id;
       const currentSlug = params.slug as string | undefined;
-      
+
       if (currentSlug !== targetSlug) {
+        // Update the ref so the URL→state effect won't re-trigger
+        prevSlugRef.current = targetSlug;
         router.replace(`/${params.username}/snippets/${targetSlug}`);
       }
-    } else if (snippets.length === 0) {
-      // If there are no snippets (e.g. last one was deleted), go to empty state
-      if (params.slug) {
-        router.replace(`/${params.username}/snippets`);
-      }
+    } else if (snippets.length === 0 && params.slug) {
+      router.replace(`/${params.username}/snippets`);
     }
   }, [activeSnippet?.id, activeSnippet?.slug, loadedFromCloud, snippets.length, params.slug, params.username, router]);
   const targetSlug = params.slug as string | undefined;
