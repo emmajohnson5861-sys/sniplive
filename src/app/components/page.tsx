@@ -47,6 +47,22 @@ export default function ComponentsPage() {
       );
     }
 
+    // Chip filter
+    if (activeChip !== 'All Components') {
+      const chipLower = activeChip.toLowerCase();
+      result = result.filter(s => {
+        if (s.liveCategory?.toLowerCase() === chipLower) return true;
+        if (s.liveTags?.some(tag => tag.toLowerCase() === chipLower)) return true;
+        
+        // Language fallbacks
+        if (chipLower === 'html' && s.html?.trim()) return true;
+        if (chipLower === 'css' && s.css?.trim()) return true;
+        if (chipLower === 'javascript' && s.js?.trim()) return true;
+        
+        return false;
+      });
+    }
+
     // Sort
     if (sort === 'Most Popular') {
       result.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
