@@ -8,14 +8,26 @@ import SplitPane from '@/components/SplitPane';
 import styles from './snippets/[slug]/page.module.css'; // Reuse styles from the snippet page
 
 export default function UserDashboard() {
-  const { setActiveSnippetId } = useSnippetContext();
+  const { setActiveSnippetId, activeSnippetId, snippets } = useSnippetContext();
   const { initialized } = useAuthStore();
+  const router = useRouter();
+  const params = useParams();
 
   useEffect(() => {
     // When landing on the bare /[username] route, clear the active snippet
     // to show the empty state design.
     setActiveSnippetId(null);
-  }, [setActiveSnippetId]);
+  }, []); // Only on mount
+
+  useEffect(() => {
+    if (activeSnippetId) {
+      const activeSnippet = snippets.find(s => s.id === activeSnippetId);
+      if (activeSnippet) {
+        const slug = activeSnippet.slug || activeSnippet.id;
+        router.push(`/${params.username}/snippets/${slug}`);
+      }
+    }
+  }, [activeSnippetId, snippets, router, params.username]);
 
   if (!initialized) return null;
 

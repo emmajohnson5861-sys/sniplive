@@ -19,8 +19,7 @@ export default function IDEPage() {
   // Sync from URL to state
   useEffect(() => {
     if (!loadedFromCloud) return;
-    const slugArray = params.slug as string[] | undefined;
-    const currentSlug = slugArray ? slugArray[0] : null;
+    const currentSlug = params.slug as string | undefined;
 
     if (currentSlug) {
       // Find snippet by slug or fallback to id
@@ -38,17 +37,15 @@ export default function IDEPage() {
   useEffect(() => {
     if (activeSnippet && loadedFromCloud && params.username) {
       const targetSlug = activeSnippet.slug || activeSnippet.id;
-      const slugArray = params.slug as string[] | undefined;
-      const currentSlug = slugArray ? slugArray[0] : null;
+      const currentSlug = params.slug as string | undefined;
       
       if (currentSlug !== targetSlug) {
-        window.history.pushState(null, '', `/${params.username}/${targetSlug}`);
+        window.history.pushState(null, '', `/${params.username}/snippets/${targetSlug}`);
       }
     }
   }, [activeSnippet?.id, activeSnippet?.slug, loadedFromCloud]);
   const targetUsername = params.username as string;
-  const slugArray = params.slug as string[] | undefined;
-  const targetSlug = slugArray ? slugArray[0] : undefined;
+  const targetSlug = params.slug as string | undefined;
 
   // Wait for auth to initialize before making routing decisions
   if (!initialized) return null;

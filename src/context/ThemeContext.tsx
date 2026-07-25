@@ -38,7 +38,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Render children normally, but avoid using `theme` in SSR to prevent hydration errors.
   // The layout will set data-theme dynamically client side.
   if (!mounted) {
-    return <>{children}</>;
+    return (
+      <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <div style={{ visibility: 'hidden' }}>{children}</div>
+      </ThemeContext.Provider>
+    );
   }
 
   return (

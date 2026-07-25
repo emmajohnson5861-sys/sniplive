@@ -294,7 +294,6 @@ export default function UserProfilePage() {
                             </div>
                             <div className={gridStyles.cardStats}>
                               <div className={gridStyles.stat}><span className="material-symbols-outlined">visibility</span> {s.viewCount || 0}</div>
-                              <div className={gridStyles.stat}><span className="material-symbols-outlined">favorite</span> {s.favoriteCount || 0}</div>
                             </div>
                           </div>
                         </article>
