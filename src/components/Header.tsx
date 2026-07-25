@@ -20,6 +20,7 @@ export default function Header() {
         <div className={styles.searchContainer}>
           <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
           <input 
+            id="global-search-input"
             type="text" 
             placeholder="Search snippets..." 
             className={styles.searchInput}

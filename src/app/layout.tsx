@@ -4,6 +4,7 @@ import './globals.css';
 import { ToastProvider } from '@/components/Toast';
 import BannedOverlay from '@/components/BannedOverlay';
 import { ThemeProvider } from '@/context/ThemeContext';
+import ShortcutHandler from '@/components/ShortcutHandler';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geist.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
         <ThemeProvider>
           <ToastProvider>
+            <ShortcutHandler />
             {children}
             <BannedOverlay />
           </ToastProvider>
