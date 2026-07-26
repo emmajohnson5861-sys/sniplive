@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     description: 'Paste your HTML, CSS, and JS code, see it come alive instantly, and save it in seconds.',
     images: ['/logo.png'],
   },
+  verification: {
+    google: '0cexsjx1Y1zJYof_LlK4uWBn7WYyHpnQ4ZOpHKiuNJY',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
