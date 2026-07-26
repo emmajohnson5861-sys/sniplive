@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   // If we have a cached user, show it immediately (no skeleton flash for returning users)
   user: cachedUser,
   loading: !cachedUser, // Don't show loading if we already have cached data
-  initialized: false,
+  initialized: !!cachedUser, // If we have cached data, treat auth as initialized immediately
 
   signIn: async () => {
     try {
