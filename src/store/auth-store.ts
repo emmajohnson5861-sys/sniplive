@@ -3,6 +3,26 @@ import { User } from '@firebase/auth';
 import { onAuthChange, signInWithGoogle, signOutUser, ensureUserDoc, checkEmailSignInMethods, signUpWithEmail as fbSignUpWithEmail, signInWithEmail as fbSignInWithEmail } from '@/lib/firebase-auth';
 import { getUser, FirestoreUser } from '@/lib/firebase-db';
 
+const USER_CACHE_KEY = 'sniplive_user_cache';
+
+function getCachedUser(): FirestoreUser | null {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(USER_CACHE_KEY) : null;
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function setCachedUser(user: FirestoreUser | null) {
+  try {
+    if (typeof window === 'undefined') return;
+    if (user) {
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_CACHE_KEY);
+    }
+  } catch { /* ignore */ }
+}
+
 interface AuthState {
   firebaseUser: User | null;
   user: FirestoreUser | null;
@@ -15,10 +35,14 @@ interface AuthState {
   updateLocalUser: (data: Partial<FirestoreUser>) => void;
 }
 
+// Pre-load cached user so the store has data BEFORE the first Firebase round-trip
+const cachedUser = getCachedUser();
+
 export const useAuthStore = create<AuthState>((set) => ({
   firebaseUser: null,
-  user: null,
-  loading: true,
+  // If we have a cached user, show it immediately (no skeleton flash for returning users)
+  user: cachedUser,
+  loading: !cachedUser, // Don't show loading if we already have cached data
   initialized: false,
 
   signIn: async () => {
@@ -26,6 +50,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const fbUser = await signInWithGoogle();
       if (fbUser) {
         const userData = await getUser(fbUser.uid);
+        setCachedUser(userData);
         set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
       }
     } catch (err) {
@@ -39,6 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const fbUser = await fbSignInWithEmail(email, pass);
       if (fbUser) {
         const userData = await getUser(fbUser.uid);
+        setCachedUser(userData);
         set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
       }
     } catch (err) {
@@ -57,6 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const fbUser = await fbSignUpWithEmail(email, pass, name);
       if (fbUser) {
         const userData = await getUser(fbUser.uid);
+        setCachedUser(userData);
         set({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
       }
     } catch (err) {
@@ -67,13 +94,16 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await signOutUser();
-    set({ firebaseUser: null, user: null, loading: false });
+    setCachedUser(null);
+    set({ firebaseUser: null, user: null, loading: false, initialized: true });
   },
 
   updateLocalUser: (data) => {
-    set((state) => ({
-      user: state.user ? { ...state.user, ...data } : null
-    }));
+    set((state) => {
+      const updated = state.user ? { ...state.user, ...data } : null;
+      setCachedUser(updated);
+      return { user: updated };
+    });
   }
 }));
 
@@ -91,12 +121,16 @@ export function initAuthListener() {
           await ensureUserDoc(fbUser);
           userData = await getUser(fbUser.uid);
         }
+        setCachedUser(userData);
         store.setState({ firebaseUser: fbUser, user: userData, loading: false, initialized: true });
       } catch (err) {
         store.setState({ firebaseUser: fbUser, user: null, loading: false, initialized: true });
       }
     } else {
+      // User is signed out — clear the cache
+      setCachedUser(null);
       store.setState({ firebaseUser: null, user: null, loading: false, initialized: true });
     }
   });
 }
+
