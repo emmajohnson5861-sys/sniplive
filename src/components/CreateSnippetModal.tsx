@@ -6,18 +6,24 @@ import Modal from './Modal';
 interface CreateSnippetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (title: string) => void;
+  onCreate: (title: string) => Promise<void> | void;
 }
 
 export default function CreateSnippetModal({ isOpen, onClose, onCreate }: CreateSnippetModalProps) {
   const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onCreate(title.trim());
-      setTitle('');
-      onClose();
+      setLoading(true);
+      try {
+        await onCreate(title.trim());
+        setTitle('');
+        onClose();
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -45,7 +51,7 @@ export default function CreateSnippetModal({ isOpen, onClose, onCreate }: Create
           />
         </div>
         
-        <button type="submit" style={{
+        <button type="submit" disabled={loading} style={{
           width: '100%',
           padding: '0.75rem',
           backgroundColor: 'var(--primary)',
@@ -53,10 +59,16 @@ export default function CreateSnippetModal({ isOpen, onClose, onCreate }: Create
           border: 'none',
           borderRadius: 'var(--radius-md)',
           fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'filter 0.2s'
-        }} onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'} onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}>
-          Create Snippet
+          cursor: loading ? 'not-allowed' : 'pointer',
+          transition: 'filter 0.2s',
+          opacity: loading ? 0.7 : 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
+        }} onMouseEnter={(e) => { if (!loading) e.currentTarget.style.filter = 'brightness(1.1)' }} onMouseLeave={(e) => { if (!loading) e.currentTarget.style.filter = 'none' }}>
+          {loading && <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite' }}>progress_activity</span>}
+          {loading ? 'Creating...' : 'Create Snippet'}
         </button>
       </form>
     </Modal>

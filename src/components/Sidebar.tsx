@@ -46,12 +46,12 @@ export default function Sidebar() {
     return matchesSearch && matchesFilter;
   });
 
-  const handleCreateSnippet = (title: string) => {
+  const handleCreateSnippet = async (title: string) => {
     if (user?.isBanned) {
       window.dispatchEvent(new CustomEvent('trigger-ban-shake'));
       return;
     }
-    createNewSnippet(title);
+    await createNewSnippet(title);
   };
 
   return (
