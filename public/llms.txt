@@ -1,0 +1,21 @@
+# SnipLive
+
+SnipLive is a powerful code snippet manager designed for web developers. It allows users to write, preview, save, and share HTML, CSS, and Vanilla JavaScript components instantly.
+
+## Key Features
+- **Live Preview Environment**: An integrated IDE with HTML, CSS, and JS tabs that renders output in real-time within an isolated iframe.
+- **Save & Organize**: Users can create an account (via email or Google Auth) to save their code snippets securely to the cloud.
+- **Public & Private Snippets**: Snippets can be made public for the community or kept private for personal use.
+- **Instant Sharing**: Generate shareable URLs to instantly send working code components to other developers.
+- **Component Library (Explore)**: A public feed where users can browse, search, and fork components created by the community.
+
+## Technical Stack
+- Framework: Next.js (App Router)
+- Language: TypeScript, HTML, CSS, JavaScript
+- Database & Auth: Firebase Firestore and Firebase Auth
+- State Management: Zustand
+
+## Usage Guidelines for AI Agents
+When generating code for SnipLive:
+- Do not use React/JSX syntax. SnipLive's environment supports raw HTML, standard CSS, and Vanilla JavaScript only.
+- External libraries can be imported via CDN links in the HTML tab (e.g., using standard `<script>` tags).
