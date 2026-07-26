@@ -11,8 +11,33 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://sniplive.com'),
   title: 'SnipLive | Live Preview Code Snippet Manager',
-  description: 'Paste your code, see it come alive, and save it in seconds.',
+  description: 'Paste your HTML, CSS, and JS code, see it come alive instantly, and save it in seconds. Build and share your components with the SnipLive community.',
+  keywords: ['code snippets', 'live preview', 'HTML CSS JS editor', 'component library', 'coding playground', 'web development'],
+  authors: [{ name: 'SnipLive Team' }],
+  creator: 'SnipLive',
+  openGraph: {
+    title: 'SnipLive | Live Preview Code Snippet Manager',
+    description: 'Paste your HTML, CSS, and JS code, see it come alive instantly, and save it in seconds.',
+    url: 'https://sniplive.com', // Placeholder URL for now
+    siteName: 'SnipLive',
+    images: [
+      {
+        url: '/logo.png', // Fallback image for now
+        width: 1200,
+        height: 630,
+        alt: 'SnipLive Logo',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SnipLive | Live Preview Code Snippet Manager',
+    description: 'Paste your HTML, CSS, and JS code, see it come alive instantly, and save it in seconds.',
+    images: ['/logo.png'],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
