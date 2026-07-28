@@ -54,7 +54,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       const unsubscribeSnippets = subscribeToUserSnippets(firebaseUser.uid, (cloudSnippets) => {
         const mapped = cloudSnippets.map(s => ({
           id: s.id, slug: s.slug, title: s.title || 'Untitled Snippet',
-          html: s.html ?? '', css: s.css ?? '', js: s.js ?? '', react: s.react,
+          html: s.html ?? '', css: s.css ?? '', js: s.js ?? '', react: s.react ?? '',
           createdAt: s.createdAt?.toDate()?.getTime() || Date.now(),
           updatedAt: s.updatedAt?.toDate()?.getTime() || Date.now(),
           visibility: s.visibility, isLive: s.isLive, allowForking: s.allowForking, forkedFromId: s.forkedFromId,
@@ -96,7 +96,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
     if (firebaseUser) {
       const fbData: Record<string, unknown> = {
-        title: snippet.title, html: snippet.html || '', css: snippet.css || '', js: snippet.js || '', react: snippet.react,
+        title: snippet.title, html: snippet.html || '', css: snippet.css || '', js: snippet.js || '', react: snippet.react || '',
       };
       if (snippet.ownerId || enriched.ownerId) {
         fbData.ownerId = snippet.ownerId || enriched.ownerId;

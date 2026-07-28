@@ -177,7 +177,7 @@ export async function createSnippet(data: {
 
   if (!existing.exists()) {
     await setDoc(docRef, {
-      title: data.title, slug, html: data.html, css: data.css, js: data.js,
+      title: data.title, slug, html: data.html, css: data.css, js: data.js, react: '',
       visibility: 'private', isLive: false, allowForking: true, forkedFromId: data.forkedFromId || null,
       viewCount: 0, likeCount: 0,
       ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
