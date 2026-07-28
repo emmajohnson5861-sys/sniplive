@@ -169,8 +169,9 @@ export async function createSnippet(data: {
   ownerId: string; ownerName: string | null; ownerEmail: string;
   ownerUsername?: string | null;
   forkedFromId?: string | null;
+  slug?: string;
 }) {
-  const slug = await generateUniqueSnippetSlug(data.ownerId, data.title);
+  const slug = data.slug || await generateUniqueSnippetSlug(data.ownerId, data.title);
   await setDoc(doc(db, 'snippets', data.id), {
     title: data.title, slug, html: data.html, css: data.css, js: data.js,
     visibility: 'private', isLive: false, allowForking: true, forkedFromId: data.forkedFromId || null,
@@ -180,7 +181,7 @@ export async function createSnippet(data: {
     collaborators: [data.ownerId], pendingRequests: [],
     isReported: false, reportCount: 0,
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-  });
+  }, { merge: true });
   await updateDoc(doc(db, 'users', data.ownerId), { snippetCount: (await getDoc(doc(db, 'users', data.ownerId))).data()?.snippetCount + 1 || 1 } as any);
 }
 

@@ -99,7 +99,6 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
         fbData.ownerId = snippet.ownerId || enriched.ownerId;
         fbData.ownerName = user?.name || null;
         fbData.ownerEmail = user?.email || '';
-        fbData.collaborators = [fbData.ownerId];
       }
       updateSnippet(snippet.id, fbData as any).catch(console.error);
     }
@@ -120,13 +119,17 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (firebaseUser) {
-      const fbData: Record<string, unknown> = { title: newTitle, slug: newSlug };
       const found = snippets.find(s => s.id === id);
-      if (found && (found.ownerId || firebaseUser.uid)) {
-        fbData.ownerId = found.ownerId || firebaseUser.uid;
-        fbData.ownerName = user?.name || null;
-        fbData.ownerEmail = user?.email || '';
-        fbData.collaborators = [fbData.ownerId];
+      const fbData: Record<string, unknown> = { title: newTitle, slug: newSlug };
+      if (found) {
+        fbData.html = found.html;
+        fbData.css = found.css;
+        fbData.js = found.js;
+        if (found.ownerId || firebaseUser.uid) {
+          fbData.ownerId = found.ownerId || firebaseUser.uid;
+          fbData.ownerName = user?.name || null;
+          fbData.ownerEmail = user?.email || '';
+        }
       }
       updateSnippet(id, fbData as any).catch(console.error);
     }
@@ -171,6 +174,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
         html: newSnippet.html, css: newSnippet.css, js: newSnippet.js,
         ownerId: firebaseUser.uid, ownerName: user?.name || null, ownerEmail: user?.email || '',
         ownerUsername: user?.username || null,
+        slug: newSlug,
       }).catch(console.error);
     }
   }, [firebaseUser, user]);
