@@ -172,16 +172,31 @@ export async function createSnippet(data: {
   slug?: string;
 }) {
   const slug = data.slug || await generateUniqueSnippetSlug(data.ownerId, data.title);
-  await setDoc(doc(db, 'snippets', data.id), {
-    title: data.title, slug, html: data.html, css: data.css, js: data.js,
-    visibility: 'private', isLive: false, allowForking: true, forkedFromId: data.forkedFromId || null,
-    viewCount: 0, likeCount: 0,
-    ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
-    ownerUsername: data.ownerUsername || null,
-    collaborators: [data.ownerId], pendingRequests: [],
-    isReported: false, reportCount: 0,
-    createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-  }, { merge: true });
+  const docRef = doc(db, 'snippets', data.id);
+  const existing = await getDoc(docRef);
+
+  if (!existing.exists()) {
+    await setDoc(docRef, {
+      title: data.title, slug, html: data.html, css: data.css, js: data.js,
+      visibility: 'private', isLive: false, allowForking: true, forkedFromId: data.forkedFromId || null,
+      viewCount: 0, likeCount: 0,
+      ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
+      ownerUsername: data.ownerUsername || null,
+      collaborators: [data.ownerId], pendingRequests: [],
+      isReported: false, reportCount: 0,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    });
+  } else {
+    await setDoc(docRef, {
+      title: data.title, slug,
+      ownerId: data.ownerId, ownerName: data.ownerName, ownerEmail: data.ownerEmail,
+      ownerUsername: data.ownerUsername || null,
+      visibility: 'private', isLive: false, allowForking: true, forkedFromId: data.forkedFromId || null,
+      collaborators: [data.ownerId], pendingRequests: [],
+      isReported: false, reportCount: 0,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    }, { merge: true });
+  }
   await updateDoc(doc(db, 'users', data.ownerId), { snippetCount: (await getDoc(doc(db, 'users', data.ownerId))).data()?.snippetCount + 1 || 1 } as any);
 }
 

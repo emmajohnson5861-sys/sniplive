@@ -93,6 +93,22 @@ export default function SplitPane() {
     }
   }, [htmlCode, cssCode, jsCode, activeSnippet, saveSnippet]);
 
+  // Save immediately before page unload (refresh / close tab)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (activeSnippet && (htmlCode !== activeSnippet.html || cssCode !== activeSnippet.css || jsCode !== activeSnippet.js)) {
+        saveSnippet({
+          ...activeSnippet,
+          html: htmlCode,
+          css: cssCode,
+          js: jsCode,
+        });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [activeSnippet, htmlCode, cssCode, jsCode, saveSnippet]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
     handleResize();

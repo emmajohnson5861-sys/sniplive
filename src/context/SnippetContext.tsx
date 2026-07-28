@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { FirestoreSnippet, subscribeToUserSnippets, createSnippet, updateSnippet, deleteSnippet as deleteFirestoreSnippet, generateUniqueSnippetSlug } from '@/lib/firebase-db';
 
@@ -46,12 +46,15 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>(null);
   const [externalSnippet, setExternalSnippet] = useState<Snippet | null>(null);
   const [loadedFromCloud, setLoadedFromCloud] = useState(false);
+  const snippetsRef = useRef(snippets);
+  snippetsRef.current = snippets;
 
   useEffect(() => {
     if (firebaseUser) {
       const unsubscribeSnippets = subscribeToUserSnippets(firebaseUser.uid, (cloudSnippets) => {
         const mapped = cloudSnippets.map(s => ({
-          id: s.id, slug: s.slug, title: s.title, html: s.html, css: s.css, js: s.js, react: s.react,
+          id: s.id, slug: s.slug, title: s.title || 'Untitled Snippet',
+          html: s.html ?? '', css: s.css ?? '', js: s.js ?? '', react: s.react,
           createdAt: s.createdAt?.toDate()?.getTime() || Date.now(),
           updatedAt: s.updatedAt?.toDate()?.getTime() || Date.now(),
           visibility: s.visibility, isLive: s.isLive, allowForking: s.allowForking, forkedFromId: s.forkedFromId,
@@ -88,12 +91,12 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       enriched.collaborators = enriched.collaborators ?? [firebaseUser.uid];
       enriched.pendingRequests = enriched.pendingRequests ?? [];
     }
-    const updated = snippets.map(s => s.id === enriched.id ? { ...enriched, updatedAt: Date.now() } : s);
+    const updated = snippetsRef.current.map(s => s.id === enriched.id ? { ...enriched, updatedAt: Date.now() } : s);
     setSnippets(updated);
     localStorage.setItem('sniplive_snippets', JSON.stringify(updated));
     if (firebaseUser) {
       const fbData: Record<string, unknown> = {
-        title: snippet.title, html: snippet.html, css: snippet.css, js: snippet.js, react: snippet.react,
+        title: snippet.title, html: snippet.html || '', css: snippet.css || '', js: snippet.js || '', react: snippet.react,
       };
       if (snippet.ownerId || enriched.ownerId) {
         fbData.ownerId = snippet.ownerId || enriched.ownerId;
@@ -102,7 +105,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
       }
       updateSnippet(snippet.id, fbData as any).catch(console.error);
     }
-  }, [snippets, firebaseUser, user]);
+  }, [snippetsRef, firebaseUser, user]);
   
   const updateSnippetTitle = useCallback(async (id: string, newTitle: string) => {
     let newSlug: string | undefined = undefined;
@@ -119,7 +122,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (firebaseUser) {
-      const found = snippets.find(s => s.id === id);
+      const found = snippetsRef.current.find(s => s.id === id);
       const fbData: Record<string, unknown> = { title: newTitle, slug: newSlug };
       if (found) {
         fbData.html = found.html;
@@ -169,18 +172,22 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     setActiveSnippetId(newSnippet.id);
     
     if (firebaseUser) {
-      createSnippet({
-        id: newSnippet.id, title: newSnippet.title,
-        html: newSnippet.html, css: newSnippet.css, js: newSnippet.js,
-        ownerId: firebaseUser.uid, ownerName: user?.name || null, ownerEmail: user?.email || '',
-        ownerUsername: user?.username || null,
-        slug: newSlug,
-      }).catch(console.error);
+      try {
+        await createSnippet({
+          id: newSnippet.id, title: newSnippet.title,
+          html: newSnippet.html, css: newSnippet.css, js: newSnippet.js,
+          ownerId: firebaseUser.uid, ownerName: user?.name || null, ownerEmail: user?.email || '',
+          ownerUsername: user?.username || null,
+          slug: newSlug,
+        });
+      } catch (e) {
+        console.error('Failed to create snippet in Firestore:', e);
+      }
     }
   }, [firebaseUser, user]);
 
   const deleteSnippet = useCallback((id: string) => {
-    const updated = snippets.filter(s => s.id !== id);
+    const updated = snippetsRef.current.filter(s => s.id !== id);
     setSnippets(updated);
     if (activeSnippetId === id) {
       setActiveSnippetId(updated.length > 0 ? updated[0].id : null);
@@ -189,7 +196,7 @@ export function SnippetProvider({ children }: { children: React.ReactNode }) {
     if (firebaseUser) {
       deleteFirestoreSnippet(id).catch(console.error);
     }
-  }, [snippets, activeSnippetId, firebaseUser]);
+  }, [activeSnippetId, firebaseUser]);
 
 
   const forkSnippet = useCallback(async (original: Snippet | FirestoreSnippet) => {
